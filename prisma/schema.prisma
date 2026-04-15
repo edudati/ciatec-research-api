@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  RESEARCHER
+  PLAYER
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  role      UserRole   @default(PLAYER)
+  authUser  AuthUser?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  userGames UserGame[]
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model AuthUser {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens RefreshToken[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("auth_users")
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  token      String    @unique
+  authUserId String
+  authUser   AuthUser  @relation(fields: [authUserId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model Game {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  presets     Preset[]
+  userGames   UserGame[]
+  matches     Match[]
+
+  @@map("games")
+}
+
+model Preset {
+  id          String     @id @default(uuid())
+  gameId      String
+  game        Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  levels      Level[]
+  userGames   UserGame[]
+
+  @@index([gameId])
+  @@map("presets")
+}
+
+model Level {
+  id          String     @id @default(uuid())
+  presetId    String
+  preset      Preset     @relation(fields: [presetId], references: [id], onDelete: Cascade)
+  name        String
+  order       Int        @map("order")
+  config      Json
+  userGames   UserGame[] @relation("CurrentLevel")
+  matches     Match[]
+
+  @@index([presetId])
+  @@unique([presetId, order])
+  @@map("levels")
+}
+
+model UserGame {
+  id             String   @id @default(uuid())
+  userId         String
+  gameId         String
+  presetId       String
+  currentLevelId String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game           Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  preset         Preset   @relation(fields: [presetId], references: [id], onDelete: Cascade)
+  currentLevel   Level    @relation("CurrentLevel", fields: [currentLevelId], references: [id], onDelete: Restrict)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([presetId])
+  @@index([currentLevelId])
+  @@unique([userId, gameId])
+  @@map("user_games")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionDate DateTime @map("session_date") @db.Date
+  startedAt DateTime @default(now())
+  matches   Match[]
+
+  @@index([userId])
+  @@unique([userId, sessionDate])
+  @@map("sessions")
+}
+
+model Match {
+  id                  String   @id @default(uuid())
+  sessionId           String
+  gameId              String
+  levelId             String
+  session             Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  game                Game     @relation(fields: [gameId], references: [id], onDelete: Restrict)
+  level               Level    @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  result              MatchResult?
+  resultDetail        MatchResultDetail?
+  events              MatchEvent[]
+  telemetryInputs     TelemetryInput[]
+  telemetryLandmarks  TelemetryLandmark[]
+  levelConfigSnapshot Json     @map("level_config_snapshot")
+  startedAt           DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([gameId])
+  @@index([levelId])
+  @@map("matches")
+}
+
+model MatchResult {
+  id         String   @id @default(uuid())
+  matchId    String   @unique
+  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  score      Int
+  durationMs Int      @map("duration_ms")
+  completed  Boolean
+  createdAt  DateTime @default(now())
+
+  @@map("match_results")
+}
+
+model MatchResultDetail {
+  id        String   @id @default(uuid())
+  matchId   String   @unique
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@map("match_result_details")
+}
+
+model MatchEvent {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  type      String
+  timestamp DateTime
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([matchId, timestamp])
+  @@map("match_events")
+}
+
+model TelemetryLandmark {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  timestamp DateTime
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([matchId, timestamp])
+  @@map("telemetry_landmarks")
+}
+
+model TelemetryInput {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  timestamp DateTime
+  device    String
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([matchId, timestamp])
+  @@map("telemetry_input")
+}
