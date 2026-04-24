@@ -93,9 +93,7 @@ Resposta sem sessao:
 
 - `POST /api/v1/sessions/matches`
 - O **level** precisa estar **desbloqueado**; caso contrario a API responde **403**.
-- Status:
-  - `201`: match criada
-  - `200`: request duplicada em janela curta (reaproveita match recente)
+- Status: `201` em match criada (cada pedido cria uma partida nova; dedupe por janela de tempo está desactivado até termos regra no `finish`).
 
 Body:
 

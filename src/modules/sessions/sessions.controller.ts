@@ -24,7 +24,7 @@ export function createSessionsController(service: SessionsService) {
         gameId: body.game_id,
         levelId: body.level_id,
       });
-      return reply.status(result.created ? 201 : 200).send(result.match);
+      return reply.status(201).send(result.match);
     },
   };
 }

@@ -7,21 +7,12 @@ type SessionsServiceDeps = {
   prisma: PrismaClient;
 };
 
-const RECENT_MATCH_WINDOW_MS = 5000;
-const recentMatchByKey = new Map<
-  string,
-  {
-    match: {
-      id: string;
-      session_id: string;
-      game_id: string;
-      level_id: string;
-      level_config_snapshot: Prisma.JsonValue | null;
-      started_at: Date;
-    };
-    expiresAt: number;
+function toJsonSnapshot(config: Prisma.JsonValue | typeof Prisma.JsonNull): Prisma.InputJsonValue | typeof Prisma.JsonNull {
+  if (config === null || config === Prisma.JsonNull) {
+    return Prisma.JsonNull;
   }
->();
+  return JSON.parse(JSON.stringify(config)) as Prisma.InputJsonValue;
+}
 
 export function createSessionsService({ prisma }: SessionsServiceDeps) {
   const dayStartUtc = (): Date => {
@@ -123,16 +114,6 @@ export function createSessionsService({ prisma }: SessionsServiceDeps) {
     },
 
     async createMatch(input: { userId: string; gameId: string; levelId: string }) {
-      const dedupeKey = `${input.userId}:${input.gameId}:${input.levelId}`;
-      const now = Date.now();
-      const recent = recentMatchByKey.get(dedupeKey);
-      if (recent && recent.expiresAt > now) {
-        return {
-          created: false,
-          match: recent.match,
-        };
-      }
-
       const user = await prisma.user.findUnique({
         where: { id: input.userId },
         select: { id: true },
@@ -151,7 +132,9 @@ export function createSessionsService({ prisma }: SessionsServiceDeps) {
 
       const level = await prisma.level.findUnique({
         where: { id: input.levelId },
-        include: {
+        select: {
+          id: true,
+          config: true,
           preset: {
             select: {
               id: true,
@@ -172,42 +155,12 @@ export function createSessionsService({ prisma }: SessionsServiceDeps) {
 
       const session = await ensureDailySession(input.userId);
 
-      const recentDbMatch = await prisma.match.findFirst({
-        where: {
-          sessionId: session.id,
-          gameId: input.gameId,
-          levelId: input.levelId,
-          startedAt: {
-            gte: new Date(now - RECENT_MATCH_WINDOW_MS),
-          },
-        },
-        orderBy: { startedAt: 'desc' },
-      });
-      if (recentDbMatch) {
-        const reusedMatch = {
-          id: recentDbMatch.id,
-          session_id: recentDbMatch.sessionId,
-          game_id: recentDbMatch.gameId,
-          level_id: recentDbMatch.levelId,
-          level_config_snapshot: recentDbMatch.levelConfigSnapshot,
-          started_at: recentDbMatch.startedAt,
-        };
-        recentMatchByKey.set(dedupeKey, {
-          match: reusedMatch,
-          expiresAt: now + RECENT_MATCH_WINDOW_MS,
-        });
-        return {
-          created: false,
-          match: reusedMatch,
-        };
-      }
-
       const match = await prisma.match.create({
         data: {
           sessionId: session.id,
           gameId: input.gameId,
           levelId: input.levelId,
-          levelConfigSnapshot: level.config === null ? Prisma.JsonNull : level.config,
+          levelConfigSnapshot: toJsonSnapshot(level.config as Prisma.JsonValue),
         },
       });
 
@@ -219,10 +172,6 @@ export function createSessionsService({ prisma }: SessionsServiceDeps) {
         level_config_snapshot: match.levelConfigSnapshot,
         started_at: match.startedAt,
       };
-      recentMatchByKey.set(dedupeKey, {
-        match: createdMatch,
-        expiresAt: now + RECENT_MATCH_WINDOW_MS,
-      });
 
       return {
         created: true,

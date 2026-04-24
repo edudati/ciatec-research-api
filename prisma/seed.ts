@@ -19,8 +19,9 @@ export const BUBLI_LEVEL_3_ID = 'ee5bfb25-4f6f-4355-a050-ece42e0dc9ac';
 /** Bestbeat (novo jogo). IDs fixos para o cliente e documentação. */
 export const BESTBEAT_GAME_ID = 'e802c4a6-1b2d-4e3f-8a9b-0c1d2e3f4a5b';
 export const BESTBEAT_PRESET_ID = 'f912d5b7-2c3e-4f4a-9b0a-1d2e3f4a5b6c';
-export const BESTBEAT_LEVEL_1_ID = '0a23e6c8-3d4f-4a5b-0b1a-2e3f4a5b6c7d';
-export const BESTBEAT_LEVEL_2_ID = '1b34f7d9-4e5a-4b6c-0d1e-2f3a4b5c6d7e';
+/** RFC 4122 variant: 4th group must start with 8, 9, a, or b (Zod .uuid() is strict) */
+export const BESTBEAT_LEVEL_1_ID = '0a23e6c8-3d4f-4a5b-8b1a-2e3f4a5b6c7d';
+export const BESTBEAT_LEVEL_2_ID = '1b34f7d9-4e5a-4b6c-8d1e-2f3a4b5c6d7e';
 
 /** Config default do preset bestbeat (sequence + targets). */
 const BESTBEAT_LEVEL_1_CONFIG: Prisma.InputJsonValue = {

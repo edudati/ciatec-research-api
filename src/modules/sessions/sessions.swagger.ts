@@ -91,7 +91,7 @@ export const sessionsSwagger: Record<string, FastifySchema> = {
     tags: ['Sessions'],
     summary: 'Create match in current daily session',
     description:
-      'Creates one match for one game and one level for authenticated user. If daily session does not exist, it is created automatically.',
+      'Creates one match for one game and one level for authenticated user. If daily session does not exist, it is created automatically. Each request creates a new match (no time-window deduplication).',
     security: [{ bearerAuth: [] }],
     body: {
       type: 'object',
@@ -102,26 +102,6 @@ export const sessionsSwagger: Record<string, FastifySchema> = {
       },
     },
     response: {
-      200: {
-        description: 'Recent duplicate request reused existing match',
-        type: 'object',
-        properties: {
-          id: { type: 'string', format: 'uuid' },
-          session_id: { type: 'string', format: 'uuid' },
-          game_id: { type: 'string', format: 'uuid' },
-          level_id: { type: 'string', format: 'uuid' },
-          level_config_snapshot: { type: 'object' },
-          started_at: { type: 'string', format: 'date-time' },
-        },
-        required: [
-          'id',
-          'session_id',
-          'game_id',
-          'level_id',
-          'level_config_snapshot',
-          'started_at',
-        ],
-      },
       201: {
         description: 'Match created',
         type: 'object',
@@ -130,7 +110,7 @@ export const sessionsSwagger: Record<string, FastifySchema> = {
           session_id: { type: 'string', format: 'uuid' },
           game_id: { type: 'string', format: 'uuid' },
           level_id: { type: 'string', format: 'uuid' },
-          level_config_snapshot: { type: 'object' },
+          level_config_snapshot: { type: 'object', additionalProperties: true },
           started_at: { type: 'string', format: 'date-time' },
         },
         required: [
