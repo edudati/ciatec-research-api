@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 
+import { assertLevelUnlockedForUser } from '../progress/user-level-progress-helpers.js';
 import { NotFoundError } from '../../shared/errors/not-found-error.js';
 
 type SessionsServiceDeps = {
@@ -166,6 +167,8 @@ export function createSessionsService({ prisma }: SessionsServiceDeps) {
       if (level.preset.gameId !== input.gameId) {
         throw new NotFoundError('Level does not belong to informed game');
       }
+
+      await assertLevelUnlockedForUser(prisma, input.userId, input.levelId);
 
       const session = await ensureDailySession(input.userId);
 

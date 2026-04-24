@@ -93,7 +93,7 @@ export const matchesSwagger: Record<string, FastifySchema> = {
             required: ['type', 'timestamp', 'data'],
             properties: {
               type: { type: 'string' },
-              timestamp: { type: 'string', format: 'date-time' },
+              timestamp: { type: 'integer', description: 'Unix epoch em milissegundos' },
               data: { type: 'object', additionalProperties: true },
             },
           },
@@ -141,7 +141,7 @@ export const matchesSwagger: Record<string, FastifySchema> = {
             type: 'object',
             required: ['timestamp', 'data'],
             properties: {
-              timestamp: { type: 'string', format: 'date-time' },
+              timestamp: { type: 'integer', description: 'Unix epoch em milissegundos' },
               data: { type: 'object', additionalProperties: true },
             },
           },
@@ -189,7 +189,7 @@ export const matchesSwagger: Record<string, FastifySchema> = {
             type: 'object',
             required: ['timestamp', 'device', 'data'],
             properties: {
-              timestamp: { type: 'string', format: 'date-time' },
+              timestamp: { type: 'integer', description: 'Unix epoch em milissegundos' },
               device: { type: 'string' },
               data: { type: 'object', additionalProperties: true },
             },

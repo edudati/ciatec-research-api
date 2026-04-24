@@ -144,6 +144,7 @@ export const sessionsSwagger: Record<string, FastifySchema> = {
       },
       400: { description: 'Validation (Zod)', ...zodValidationError },
       401: { description: 'Unauthorized', ...appError },
+      403: { description: 'Level is locked for this user', ...appError },
       404: { description: 'Related entities not found', ...appError },
     },
   },

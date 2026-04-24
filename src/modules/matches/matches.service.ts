@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 
+import { applyUserLevelProgressAfterMatchFinish } from '../progress/user-level-progress-helpers.js';
 import { ConflictError } from '../../shared/errors/conflict-error.js';
 import { NotFoundError } from '../../shared/errors/not-found-error.js';
 
@@ -65,38 +66,17 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
           },
         });
 
-        if (input.completed) {
-          const userGame = await tx.userGame.findUnique({
-            where: {
-              userId_gameId: {
-                userId: input.userId,
-                gameId: match.gameId,
-              },
-            },
-            select: {
-              id: true,
-              currentLevelId: true,
-            },
-          });
-
-          if (userGame && userGame.currentLevelId === match.levelId) {
-            const nextLevel = await tx.level.findFirst({
-              where: {
-                presetId: match.level.presetId,
-                order: { gt: match.level.order },
-              },
-              orderBy: { order: 'asc' },
-              select: { id: true },
-            });
-
-            if (nextLevel) {
-              await tx.userGame.update({
-                where: { id: userGame.id },
-                data: { currentLevelId: nextLevel.id },
-              });
-            }
-          }
-        }
+        await applyUserLevelProgressAfterMatchFinish(tx, {
+          userId: input.userId,
+          gameId: match.gameId,
+          levelId: match.levelId,
+          levelPresetId: match.level.presetId,
+          levelOrder: match.level.order,
+          completed: input.completed,
+          score: input.score,
+          durationMs: input.durationMs,
+          extra: input.extra,
+        });
 
         return { createdResult, createdDetail };
       });
@@ -118,7 +98,7 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
         matchId: string;
         events: Array<{
           type: string;
-          timestamp: string;
+          timestamp: number;
           data: Record<string, unknown>;
         }>;
       },
@@ -128,7 +108,7 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
       const payload = input.events.map((event) => ({
         matchId: input.matchId,
         type: event.type,
-        timestamp: new Date(event.timestamp),
+        timestamp: BigInt(event.timestamp),
         data: event.data as Prisma.InputJsonValue,
       }));
 
@@ -148,7 +128,7 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
         userId: string;
         matchId: string;
         frames: Array<{
-          timestamp: string;
+          timestamp: number;
           data: Record<string, unknown>;
         }>;
       },
@@ -157,7 +137,7 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
 
       const payload = input.frames.map((frame) => ({
         matchId: input.matchId,
-        timestamp: new Date(frame.timestamp),
+        timestamp: BigInt(frame.timestamp),
         data: frame.data as Prisma.InputJsonValue,
       }));
 
@@ -177,7 +157,7 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
         userId: string;
         matchId: string;
         inputs: Array<{
-          timestamp: string;
+          timestamp: number;
           device: string;
           data: Record<string, unknown>;
         }>;
@@ -187,7 +167,7 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
 
       const payload = input.inputs.map((item) => ({
         matchId: input.matchId,
-        timestamp: new Date(item.timestamp),
+        timestamp: BigInt(item.timestamp),
         device: item.device,
         data: item.data as Prisma.InputJsonValue,
       }));

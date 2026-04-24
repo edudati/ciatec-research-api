@@ -13,7 +13,7 @@ export const finishMatchBodySchema = z.object({
 
 const eventItemSchema = z.object({
   type: z.string().trim().min(1),
-  timestamp: z.string().datetime(),
+  timestamp: z.number().int().nonnegative(),
   data: z.record(z.string(), z.unknown()),
 });
 
@@ -22,7 +22,7 @@ export const addMatchEventsBodySchema = z.object({
 });
 
 const telemetryFrameSchema = z.object({
-  timestamp: z.string().datetime(),
+  timestamp: z.number().int().nonnegative(),
   data: z.record(z.string(), z.unknown()),
 });
 
@@ -31,7 +31,7 @@ export const addTelemetryLandmarksBodySchema = z.object({
 });
 
 const telemetryInputItemSchema = z.object({
-  timestamp: z.string().datetime(),
+  timestamp: z.number().int().nonnegative(),
   device: z.string().trim().min(1),
   data: z.record(z.string(), z.unknown()),
 });

@@ -100,7 +100,7 @@ Registro global de eventos em tempo real durante a partida. O campo `type` ident
 | `id` | UUID | Identificador único |
 | `match_id` | FK | Partida associada |
 | `type` | VARCHAR | Tipo do evento: cair, pular, colidir, etc. |
-| `timestamp` | TIMESTAMPTZ | Momento exato do evento durante a partida |
+| `timestamp` | BIGINT | Momento exato do evento durante a partida em epoch milissegundos |
 | `data` | JSONB | Dados livres específicos do evento e do jogo |
 
 ---
@@ -115,7 +115,7 @@ A telemetria é dividida em duas tabelas separadas pois possuem natureza complet
 |---|---|---|
 | `id` | UUID | Identificador único |
 | `match_id` | FK | Partida associada |
-| `timestamp` | TIMESTAMPTZ | Momento da captura |
+| `timestamp` | BIGINT | Momento da captura em epoch milissegundos |
 | `data` | JSONB | Ex: `{joints: {left_knee: {x,y,z}, right_elbow: {x,y,z}}}` |
 
 **⚠️ Atenção ao volume de dados:**
@@ -129,7 +129,7 @@ A telemetria é dividida em duas tabelas separadas pois possuem natureza complet
 |---|---|---|
 | `id` | UUID | Identificador único |
 | `match_id` | FK | Partida associada |
-| `timestamp` | TIMESTAMPTZ | Momento do input |
+| `timestamp` | BIGINT | Momento do input em epoch milissegundos |
 | `device` | VARCHAR | keyboard, mouse, touch ou joystick |
 | `data` | JSONB | Ex: `{key: "space", pressure: 0.8}` ou `{x: 120, y: 340, drag_ms: 200}` |
 
@@ -301,6 +301,6 @@ Status rapido do que ja foi implementado na API para manter este documento adere
 ### 4.2 Regras de integracao para cliente de jogo
 
 - Cliente nunca envia `user_id` em gameplay; API usa `sub` do JWT
-- `timestamp` deve ser ISO 8601 UTC e consistente em todos os eventos/telemetria
+- `timestamp` deve ser epoch em milissegundos e consistente em todos os eventos/telemetria
 - `data` dos eventos/telemetria e livre em JSON
 - Em caso de perda de rede, reenviar lote mantendo ordem temporal local

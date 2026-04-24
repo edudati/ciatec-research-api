@@ -17,7 +17,7 @@ Ao final da implementacao no cliente, o jogo deve conseguir:
 - Enviar `Authorization: Bearer <accessToken>` em todos os endpoints de gameplay.
 - Nunca enviar `user_id` no payload.
 - A API usa o `sub` do JWT como identidade do jogador.
-- `timestamp` sempre em ISO 8601 UTC (exemplo: `2026-04-15T14:32:10.120Z`).
+- `timestamp` de eventos/telemetria sempre em **epoch milissegundos** (exemplo: `1760001130120`).
 - `data` em eventos e telemetria e JSON livre.
 - Limites de batch:
   - eventos: ate 500 por request;
@@ -83,14 +83,16 @@ Resposta sem sessao:
 
 ### 3) Iniciar/obter progresso do jogo
 
-- `GET /api/v1/progress/start?game_id=<uuid>`
+- `GET /api/v1/progress/start?game_id=<uuid>&levels_detail=summary|full` (o segundo query param e opcional; *default* `summary`)
 - Body: vazio
-- Retorna `user_game_id`, `game`, `preset` e `current_level`.
+- Retorna `user_game_id`, `game`, `preset` (com `description` opcional), `current_level` (sempre com `config`, mais `unlocked`, `completed`, `is_current`, `bests`) e **`levels`**: a trilha completa do *preset* actual, com `id`, `name`, `order`, `unlocked`, `completed`, `is_current`, `bests` e, com `levels_detail=full`, `config` em cada ponto. Em `summary` nao manda o `config` de cada ponto da trilha (menor payload), mas o `current_level` continua com `config` completo.
+- Guia alinhado ao *front* / payload: [`LEVEL-AND-PRESET-PAYLOADS.md`](./LEVEL-AND-PRESET-PAYLOADS.md).
 - ID fixo do Bubli (seed): `d601b66e-2f7d-42bd-b7e2-11baa208faf3`.
 
 ### 4) Criar match
 
 - `POST /api/v1/sessions/matches`
+- O **level** precisa estar **desbloqueado**; caso contrario a API responde **403**.
 - Status:
   - `201`: match criada
   - `200`: request duplicada em janela curta (reaproveita match recente)
@@ -127,8 +129,8 @@ Body:
 ```json
 {
   "events": [
-    { "type": "jump", "timestamp": "2026-04-15T10:00:01.000Z", "data": { "height": 1.2 } },
-    { "type": "hit", "timestamp": "2026-04-15T10:00:01.250Z", "data": { "target": "wall" } }
+    { "type": "jump", "timestamp": 1760001131000, "data": { "height": 1.2 } },
+    { "type": "hit", "timestamp": 1760001131250, "data": { "target": "wall" } }
   ]
 }
 ```
@@ -144,7 +146,7 @@ Body:
 {
   "frames": [
     {
-      "timestamp": "2026-04-15T10:00:01.033Z",
+      "timestamp": 1760001131033,
       "data": {
         "joints": {
           "left_knee": { "x": 0.1, "y": 0.5, "z": 0.0 }
@@ -166,12 +168,12 @@ Body:
 {
   "inputs": [
     {
-      "timestamp": "2026-04-15T10:00:01.010Z",
+      "timestamp": 1760001131010,
       "device": "mouse",
       "data": { "x": 120, "y": 340, "drag_ms": 200 }
     },
     {
-      "timestamp": "2026-04-15T10:00:01.200Z",
+      "timestamp": 1760001131200,
       "device": "keyboard",
       "data": { "key": "space", "pressure": 0.8 }
     }

@@ -19,8 +19,9 @@ model User {
   authUser  AuthUser?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  userGames UserGame[]
-  sessions  Session[]
+  userGames               UserGame[]
+  sessions                Session[]
+  userLevelProgress   UserLevelProgress[]
 
   @@map("users")
 }
@@ -68,22 +69,25 @@ model Preset {
   game        Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
   name        String
   description String?
+  isDefault   Boolean    @default(false)
   levels      Level[]
   userGames   UserGame[]
 
   @@index([gameId])
+  @@index([gameId, isDefault])
   @@map("presets")
 }
 
 model Level {
-  id          String     @id @default(uuid())
-  presetId    String
-  preset      Preset     @relation(fields: [presetId], references: [id], onDelete: Cascade)
-  name        String
-  order       Int        @map("order")
-  config      Json
-  userGames   UserGame[] @relation("CurrentLevel")
-  matches     Match[]
+  id                 String     @id @default(uuid())
+  presetId            String
+  preset              Preset     @relation(fields: [presetId], references: [id], onDelete: Cascade)
+  name                String
+  order                Int        @map("order")
+  config              Json
+  userGames            UserGame[]        @relation("CurrentLevel")
+  matches             Match[]
+  userLevelProgress   UserLevelProgress[]
 
   @@index([presetId])
   @@unique([presetId, order])
@@ -109,6 +113,26 @@ model UserGame {
   @@index([currentLevelId])
   @@unique([userId, gameId])
   @@map("user_games")
+}
+
+/// Per (user, level) progress, bests, and lock state. Missing row means locked / not started for that level
+/// in API responses; first level in preset is auto-seeded as unlocked in progress start / match start.
+model UserLevelProgress {
+  id        String   @id @default(uuid())
+  userId    String
+  levelId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level     Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  unlocked  Boolean  @default(false)
+  completed Boolean  @default(false)
+  bests     Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, levelId])
+  @@index([userId])
+  @@index([levelId])
+  @@map("user_level_progress")
 }
 
 model Session {
@@ -173,7 +197,7 @@ model MatchEvent {
   matchId   String   @map("match_id")
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   type      String
-  timestamp DateTime
+  timestamp BigInt
   data      Json
   createdAt DateTime @default(now())
 
@@ -185,7 +209,7 @@ model TelemetryLandmark {
   id        String   @id @default(uuid())
   matchId   String   @map("match_id")
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  timestamp DateTime
+  timestamp BigInt
   data      Json
   createdAt DateTime @default(now())
 
@@ -197,7 +221,7 @@ model TelemetryInput {
   id        String   @id @default(uuid())
   matchId   String   @map("match_id")
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  timestamp DateTime
+  timestamp BigInt
   device    String
   data      Json
   createdAt DateTime @default(now())

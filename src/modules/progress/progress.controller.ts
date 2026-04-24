@@ -10,6 +10,7 @@ export function createProgressController(service: ProgressService) {
       const result = await service.start({
         userId: request.user.sub,
         gameId: query.game_id,
+        levelsDetail: query.levels_detail,
       });
 
       return reply.send(result);
