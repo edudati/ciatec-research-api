@@ -18,6 +18,7 @@ export function buildSwaggerOptions(): SwaggerOptions {
       tags: [
         { name: 'Health', description: 'Liveness' },
         { name: 'Auth', description: 'Authentication' },
+        { name: 'Progress', description: 'Preset trail and level config (gameplay)' },
       ],
       components: {
         securitySchemes: {

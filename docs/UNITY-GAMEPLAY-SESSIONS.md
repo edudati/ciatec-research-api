@@ -27,13 +27,14 @@ Ao final da implementacao no cliente, o jogo deve conseguir:
 ## Fluxo recomendado no cliente (ordem)
 
 1. `POST /api/v1/sessions/start`
-2. `GET /api/v1/progress/start?game_id=<uuid>`
-3. `POST /api/v1/sessions/matches`
-4. Durante a partida:
+2. `GET /api/v1/preset?game_id=<uuid>`
+3. `GET /api/v1/levels/<level_uuid>` (opcional: obter `config` antes da match; nivel desbloqueado)
+4. `POST /api/v1/sessions/matches`
+5. Durante a partida:
    - `POST /api/v1/matches/:match_id/events`
    - `POST /api/v1/matches/:match_id/telemetry/landmarks`
    - `POST /api/v1/matches/:match_id/telemetry/input`
-5. Ao encerrar:
+6. Ao encerrar:
    - `POST /api/v1/matches/:match_id/finish`
 
 ## Contratos de endpoint
@@ -81,15 +82,21 @@ Resposta sem sessao:
 }
 ```
 
-### 3) Iniciar/obter progresso do jogo
+### 3) Obter preset e trilha (sem config por nivel)
 
-- `GET /api/v1/progress/start?game_id=<uuid>&levels_detail=summary|full` (o segundo query param e opcional; *default* `summary`)
+- `GET /api/v1/preset?game_id=<uuid>`
 - Body: vazio
-- Retorna `user_game_id`, `game`, `preset` (com `description` opcional), `current_level` (sempre com `config`, mais `unlocked`, `completed`, `is_current`, `bests`) e **`levels`**: a trilha completa do *preset* actual, com `id`, `name`, `order`, `unlocked`, `completed`, `is_current`, `bests` e, com `levels_detail=full`, `config` em cada ponto. Em `summary` nao manda o `config` de cada ponto da trilha (menor payload), mas o `current_level` continua com `config` completo.
-- Guia alinhado ao *front* / payload: [`LEVEL-AND-PRESET-PAYLOADS.md`](./LEVEL-AND-PRESET-PAYLOADS.md).
+- Retorna `user_game_id`, `game`, `preset`, `current_level` e **`levels`**: trilha completa ordenada por `order`, cada item com `id`, `name`, `order`, `unlocked`, `completed`, `is_current`, `bests`. **Nao** inclui `config`; use o passo seguinte para carregar a fase.
+- Guia: [`LEVEL-AND-PRESET-PAYLOADS.md`](./LEVEL-AND-PRESET-PAYLOADS.md).
 - ID fixo do Bubli (seed): `d601b66e-2f7d-42bd-b7e2-11baa208faf3`.
 
-### 4) Criar match
+### 4) Obter nivel completo (config)
+
+- `GET /api/v1/levels/<level_uuid>`
+- Requer nivel **desbloqueado** (403 se bloqueado). **404** se o nivel nao pertencer ao preset do `user_game` desse jogo.
+- Resposta: `id`, `preset_id`, `game_id`, `name`, `order`, **`config`**, `unlocked`, `completed`, `bests`.
+
+### 5) Criar match
 
 - `POST /api/v1/sessions/matches`
 - O **level** precisa estar **desbloqueado**; caso contrario a API responde **403**.
@@ -117,7 +124,7 @@ Resposta:
 }
 ```
 
-### 5) Enviar eventos de gameplay (batch)
+### 6) Enviar eventos de gameplay (batch)
 
 - `POST /api/v1/matches/:match_id/events`
 - Limite: ate 500 eventos por request
@@ -133,7 +140,7 @@ Body:
 }
 ```
 
-### 6) Enviar telemetria landmarks (batch)
+### 7) Enviar telemetria landmarks (batch)
 
 - `POST /api/v1/matches/:match_id/telemetry/landmarks`
 - Limite: ate 100 frames por request
@@ -155,7 +162,7 @@ Body:
 }
 ```
 
-### 7) Enviar telemetria input (batch)
+### 8) Enviar telemetria input (batch)
 
 - `POST /api/v1/matches/:match_id/telemetry/input`
 - Limite: ate 100 inputs por request
@@ -179,7 +186,7 @@ Body:
 }
 ```
 
-### 8) Finalizar match
+### 9) Finalizar match
 
 - `POST /api/v1/matches/:match_id/finish`
 

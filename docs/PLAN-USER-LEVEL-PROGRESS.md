@@ -77,12 +77,10 @@ Evita espalhar lógica de comparação JSON no `matches.service` bruto: **o serv
 
 Garantir que tudo acontece no **mesmo** `prisma.$transaction` para coerência.
 
-### Fase B — Leitura: `GET /api/v1/progress/start` (ou novo endpoint)
+### Fase B — Leitura: `GET /api/v1/preset` + `GET /api/v1/levels/:level_id`
 
-- Estender **`progressService.start`**: para o `user_game` do `(user, game)`,
-  - Carregar `levels` do `preset` ordenados por `order`.
-  - Left-join (ou 2 query) com `user_level_progress` nesses `levelId`s.
-  - Responder o **mapa** (estrutura que o front precisa: `id`, `order`, `unlocked`, `completed`, `config` opcional para não mandar 10× o JSON gordo, ou `config` só no `current_level` — alinhar com payload; pode ser flag `include_level_config: true` na query).
+- **`GET /preset?game_id=`**: para o `user_game` do `(user, game)`, carregar `levels` do `preset` ordenados por `order`, com join a `user_level_progress`; resposta **sem** `config` na trilha (estratégia *slim* fixa).
+- **`GET /levels/:level_id`**: devolve o nível completo com `config` se estiver desbloqueado (403 caso contrário).
 
 ### Fase C — Validação de `createMatch`
 
@@ -91,11 +89,11 @@ Garantir que tudo acontece no **mesmo** `prisma.$transaction` para coerência.
 
 *Ordem Mínima Viable Product:* A → B (só leitura) → C, ou A → C se quiseres forçar desbloqueio cedo; sem `unlocked` preenchido, tudo fica *false* e bloqueia — aí fazer *seed* ou *first unlock* na criação de `user_game` (p.ex. desbloquear `order: 0` do preset).
 
-**Seed de desbloqueio na criação de `user_games`:** na mesma *transaction* em que se cria `user_games` em `progress.start`, criar `user_level_progress` com `unlocked: true` para o primeiro `level` (e opcionalmente como hoje, mais tarde, para os “acima” *false*).
+**Seed de desbloqueio na criação de `user_games`:** ao primeiro `GET /preset` (criação de `user_games`), garantir desbloqueio do primeiro `level` por `order` (como hoje via `ensureFirstLevelUnlockedInPreset`).
 
 ### Fase D — Contrato e documentos
 
-- Actualizar `progress.swagger.ts` e `UNITY-GAMEPLAY-SESSIONS.md` + `LEVEL-AND-PRESET-PAYLOADS.md` (se existir) com a nova resposta.
+- Actualizar `progress.swagger.ts` e `UNITY-GAMEPLAY-SESSIONS.md` + `LEVEL-AND-PRESET-PAYLOADS.md` com os contratos `GET /preset` e `GET /levels/:id`.
 - `finish`: opcionalmente resposta a incluir `bests_Updated` / snapshot para o cliente otimisticamente actualizar a UI (nice-to-have).
 
 ### Fase E — Testes
@@ -121,7 +119,7 @@ Garantir que tudo acontece no **mesmo** `prisma.$transaction` para coerência.
 
 1. Tabela **única** `user_level_progress` com `@@unique([userId, levelId])` e **`bests Json`**.  
 2. **`finish`** a fazer *upsert* + *merge* e a manter a transacção.  
-3. **`GET progress`** a devolver a lista de levels + estados.  
+3. **`GET /preset`** a devolver a lista de levels + estados; **`GET /levels/:id`** para `config`.  
 4. **`createMatch`** a respeitar `unlocked` quando a fase C estiver activa, com regra inicial a partir de `user_games` + criação do primeiro *unlock*.  
 5. Lógica de *merge* e de *modo* de jogo em **código reutilizável** por `gameId`, **não** tabelas por jogo.
 
@@ -135,21 +133,14 @@ Este plano fica alinhado com tudo o que discutiste (tabela geral, custo de leitu
 
 Objectivo: o cliente monta a **trilha** (todos os *nodes* do preset) e sabe o **nivel “actual”** (realce / cursor).
 
-- **`current_level`:** o mesmo conceito de hoje — `id`, `name`, `order`, e **`config` completo** (para puder começar já no nível selecionado, se a UI o permitir), ou só metadados se fizeres *slim* (ver abaixo).
+- **`current_level`:** `id`, `name`, `order`, flags e `bests` — **sem** `config` na resposta de `GET /preset`; o cliente chama **`GET /levels/:id`** para o `config`.
 - **`preset`:** `id`, `name`, (opcional `description`).
 - **`levels`:** **lista ordenada** por `order` com, no mínimo, por item:
   - `id`, `name`, `order`
   - `unlocked`, `completed` (vindos de `user_level_progress` + regras)
   - (opcional) `is_current: boolean` (redundante com `current_level.id`, mas prático no front)
 
-**Peso de payload (importante):** o `config` de cada fase pode ser gordo. Duas abordagens:
-
-| Estratégia | Uso |
-| --- | --- |
-| **A — Completo na entrada** | O `GET progress` traz `config` em **todos** os itens de `levels[]` (e em `current_level`). Simples no cliente, mas o JSON cresce com o número de fases. |
-| **B — *Slim* na trilha** | Na entrada, `levels[]` **sem** `config` (só `id`, `name`, `order`, flags, eventualmente *thumbnail* no futuro). O **config** gordo só se pede abaixo (7.2). Recomendada se houver muitos levels ou *configs* grandes. |
-
-A escolha **A** vs **B** pode ser parâmetro de *query* na mesma rota, ex. `?levels_detail=summary|full` (nomes a combinar com o *front*).
+**Peso de payload:** a API fixou estratégia **B** — `GET /preset` é *slim*; `config` vem em **`GET /levels/:level_id`** quando o cliente precisa (nível desbloqueado).
 
 A origem de verdade do preset continua a ser o **`user_games.presetId`**: essa trilha representa **sempre o preset** associado àquele jogador naquele jogo.
 
@@ -161,15 +152,7 @@ Dois momentos; podes afinar o *timing* consoante a UX e o tamanho do *asset* ló
 
 | Momento | O que precisas | Sugestão |
 | --- | --- | --- |
-| **Clique (selecionar na trilha)** | Mostrar **bests** e *preview* (título, bloqueado, concluído) | *Bests* no mesmo *payload* do 7.1, por exemplo `levels[i].bests` (e opcional `config` se o modo for *full*), ou `GET` extra só com `level_id` quando trocas de nó. |
-| **Play (iniciar partida)** | **Config** imutável para a partida (snapshot) | Fluxo **actual** da API: `POST /api/v1/sessions/matches` com `level_id` devolve `level_config_snapshot`. Essa resposta é a **fonte de verdade** para a partida, mesmo que o *GET progress* já tivesse trazido `config`. |
+| **Clique (selecionar na trilha)** | **Bests**, título, bloqueado, concluído | Vêm em `GET /preset` (`levels[]`). Opcional: `GET /levels/:id` para **`config`** se a UX precisar de pré-visualização (nível desbloqueado). |
+| **Play (iniciar partida)** | **Config** imutável para a partida | `POST /api/v1/sessions/matches` devolve **`level_config_snapshot`** — fonte de verdade para essa *match*, mesmo que já tenhas chamado `GET /levels/:id` antes. |
 
-**Recomendação prática:**
-
-- **Bests** — podem chegar tudo de uma com a trilha (7.1) ou noutro pedido ao mudar a seleção; basta o cliente alinhar com a equipa.
-- **Config e Play** — não é *obrigatório* trazer o `config` completo no clique. Duas vias *saudáveis*:
-  1. Com **7.1 full** em RAM, ainda assim no **Play** fazes `POST .../matches` e usas `level_config_snapshot` para *spawn* (garante snapshot imutável, como hoje).
-  2. Com **7.1 slim**, no clique só *UI* + bests; no **Play** a primeira carga *oficial* do ficheiro lógico da fase vem de `level_config_snapshot` (mais *loading* de rede no arranque da partida, menos peso no menu).
-- A pergunta “*só ao Play?*” — *sim*, **pode** atrasar o `config` gordo só até o **Play** (fluxo *slim* + *create match*). Se a UX precisar de *pré-validação* do mapa, preferir **7.1 full** ou *GET* de detalhe do level ao tocar.
-
-**Resumo:** a **trilha** = `current_level` + `levels[]` do preset (7.1). **Bests** acompanham a trilha ou vêm a pedir. A **fase a jogar com snapshot fixo** vem, como já desenhado, de **`level_config_snapshot`** após `POST /sessions/matches` — o *Play* é o ponto mínimo técnico para o config imutável da *match*; o clique pode ser só *UI* + *bests* se optarem por *slim*.
+**Resumo:** trilha + bests = `GET /preset`. **Config** por nível = `GET /levels/:id` quando precisares. **Snapshot da partida** = `level_config_snapshot` após `POST /sessions/matches`.

@@ -1,0 +1,224 @@
+{
+    "levelName": "Fase 2 — A Subida",
+    "cellSize": 1.0,
+    "grid": [
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                6,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                5,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                8,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                3,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                9,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "row": [
+                0,
+                0,
+                0,
+                0,
+                7,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        }
+    ],
+    "details": [
+        {
+            "tileId": 8,
+            "rampDirection": "North",
+            "elevation": 0.0,
+            "targetElevation": 1.5,
+            "frequency": 0,
+            "amplitude": 0,
+            "coinValue": 0
+        },
+        {
+            "tileId": 9,
+            "rampDirection": "North",
+            "elevation": 1.5,
+            "targetElevation": 0.0,
+            "frequency": 0,
+            "amplitude": 0,
+            "coinValue": 0
+        },
+        {
+            "tileId": 1,
+            "frequency": 0,
+            "amplitude": 0,
+            "coinValue": 0
+        },
+        {
+            "tileId": 2,
+            "frequency": 0,
+            "amplitude": 0,
+            "coinValue": 0
+        },
+        {
+            "tileId": 3,
+            "frequency": 2.0,
+            "amplitude": 1.5,
+            "coinValue": 0
+        },
+        {
+            "tileId": 5,
+            "frequency": 0,
+            "amplitude": 0,
+            "coinValue": 25
+        },
+        {
+            "tileId": 7,
+            "frequency": 0,
+            "amplitude": 0,
+            "coinValue": 0
+        }
+    ]
+}

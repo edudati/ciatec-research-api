@@ -83,6 +83,7 @@ model Level {
   presetId            String
   preset              Preset     @relation(fields: [presetId], references: [id], onDelete: Cascade)
   name                String
+  /// Order shown on the client map / trail for this preset (lower first). Unique per preset.
   order                Int        @map("order")
   config              Json
   userGames            UserGame[]        @relation("CurrentLevel")
@@ -116,7 +117,7 @@ model UserGame {
 }
 
 /// Per (user, level) progress, bests, and lock state. Missing row means locked / not started for that level
-/// in API responses; first level in preset is auto-seeded as unlocked in progress start / match start.
+/// in API responses; first level in preset is auto-seeded as unlocked on preset fetch / match start.
 model UserLevelProgress {
   id        String   @id @default(uuid())
   userId    String

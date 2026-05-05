@@ -22,30 +22,37 @@ const zodValidationError = {
   required: ['success', 'code', 'message', 'details', 'issues'],
 } as const;
 
+const trailLevelItem = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    name: { type: 'string' },
+    order: { type: 'integer', description: 'Display order on the map (ascending).' },
+    unlocked: { type: 'boolean' },
+    completed: { type: 'boolean' },
+    is_current: { type: 'boolean' },
+    bests: { type: 'object' },
+  },
+  required: ['id', 'name', 'order', 'unlocked', 'completed', 'is_current', 'bests'],
+} as const;
+
 export const progressSwagger: Record<string, FastifySchema> = {
-  start: {
+  preset: {
     tags: ['Progress'],
-    summary: 'Start game progress',
+    summary: 'Get preset and level trail for a game',
     description:
-      'Uses authenticated user from JWT. If no `user_games` row yet: assigns the **default preset** for that game (`isDefault: true` on the preset) and the first level by `order`, then returns that state. If no default exists, uses the first preset by `id`. If a row already exists, returns that progress unchanged. The trail of all levels in the preset is in `levels` (unlocked, completed, bests, is_current; optional `config` on each when levels_detail=full). `current_level` always includes `config` plus `unlocked`, `completed`, `is_current`, `bests`.',
+      'Authenticated user from JWT. Ensures a `user_games` row exists (default preset for the game, first level by `order` if new). Returns preset metadata and **all levels** ordered by `order` for the UI trail. Does **not** include `config`; call `GET /levels/:level_id` to load a phase.',
     security: [{ bearerAuth: [] }],
     querystring: {
       type: 'object',
       required: ['game_id'],
       properties: {
         game_id: { type: 'string', format: 'uuid' },
-        levels_detail: {
-          type: 'string',
-          enum: ['summary', 'full'],
-          default: 'summary',
-          description:
-            'summary: levels[] omits per-level `config` (saves bytes). full: every trail item includes `config`. `current_level` always has `config`.',
-        },
       },
     },
     response: {
       200: {
-        description: 'Progress started',
+        description: 'Preset and trail',
         type: 'object',
         properties: {
           user_game_id: { type: 'string', format: 'uuid' },
@@ -66,33 +73,11 @@ export const progressSwagger: Record<string, FastifySchema> = {
             },
             required: ['id', 'name', 'description'],
           },
-          current_level: {
-            type: 'object',
-            properties: {
-              id: { type: 'string', format: 'uuid' },
-              name: { type: 'string' },
-              order: { type: 'integer' },
-              config: { type: 'object' },
-              unlocked: { type: 'boolean' },
-              completed: { type: 'boolean' },
-              is_current: { type: 'boolean' },
-              bests: { type: 'object' },
-            },
-            required: [
-              'id',
-              'name',
-              'order',
-              'config',
-              'unlocked',
-              'completed',
-              'is_current',
-              'bests',
-            ],
-          },
+          current_level: trailLevelItem,
           levels: {
             type: 'array',
-            items: { type: 'object', additionalProperties: true },
-            description: 'All levels in the current preset, ordered, for the trail / map',
+            items: trailLevelItem,
+            description: 'All levels in the user preset, sorted by `order` ascending',
           },
         },
         required: ['user_game_id', 'game', 'preset', 'current_level', 'levels'],
@@ -100,6 +85,52 @@ export const progressSwagger: Record<string, FastifySchema> = {
       400: { description: 'Validation (Zod)', ...zodValidationError },
       401: { description: 'Unauthorized', ...appError },
       404: { description: 'Related entities not found', ...appError },
+    },
+  },
+  getLevel: {
+    tags: ['Progress'],
+    summary: 'Get full level (config) for the authenticated user',
+    description:
+      'JWT identifies the user. The level must belong to the same preset as `user_games` for that game and must be **unlocked** (403 otherwise). Returns full `config` for loading the phase.',
+    security: [{ bearerAuth: [] }],
+    params: {
+      type: 'object',
+      required: ['level_id'],
+      properties: {
+        level_id: { type: 'string', format: 'uuid' },
+      },
+    },
+    response: {
+      200: {
+        description: 'Level with config',
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          preset_id: { type: 'string', format: 'uuid' },
+          game_id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          order: { type: 'integer' },
+          config: { type: 'object', additionalProperties: true },
+          unlocked: { type: 'boolean' },
+          completed: { type: 'boolean' },
+          bests: { type: 'object' },
+        },
+        required: [
+          'id',
+          'preset_id',
+          'game_id',
+          'name',
+          'order',
+          'config',
+          'unlocked',
+          'completed',
+          'bests',
+        ],
+      },
+      400: { description: 'Validation (Zod)', ...zodValidationError },
+      401: { description: 'Unauthorized', ...appError },
+      403: { description: 'Level locked', ...appError },
+      404: { description: 'Level or game not found', ...appError },
     },
   },
 };

@@ -33,7 +33,7 @@ export async function ensureFirstLevelUnlockedInPreset(
 }
 
 /**
- * Used before creating a match: the level must be unlocked, or be the first level in its preset (then we seed and allow).
+ * Used before creating a match or returning level config: the level must be unlocked, or be the first level in its preset (then we seed and allow).
  */
 export async function assertLevelUnlockedForUser(
   db: PrismaClient,

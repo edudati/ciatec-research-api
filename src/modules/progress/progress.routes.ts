@@ -10,5 +10,10 @@ export async function progressRoutes(fastify: FastifyInstance): Promise<void> {
   const service = createProgressService({ prisma });
   const controller = createProgressController(service);
 
-  fastify.get('/start', { preHandler: [authenticate], schema: progressSwagger.start }, controller.start);
+  fastify.get('/preset', { preHandler: [authenticate], schema: progressSwagger.preset }, controller.getPreset);
+  fastify.get(
+    '/levels/:level_id',
+    { preHandler: [authenticate], schema: progressSwagger.getLevel },
+    controller.getLevel,
+  );
 }

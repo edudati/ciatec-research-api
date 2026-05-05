@@ -126,7 +126,7 @@ export function buildApp(): FastifyInstance {
   );
   void app.register(authRoutes, { prefix: `${API_PREFIX}/auth` });
   void app.register(matchesRoutes, { prefix: `${API_PREFIX}/matches` });
-  void app.register(progressRoutes, { prefix: `${API_PREFIX}/progress` });
+  void app.register(progressRoutes, { prefix: API_PREFIX });
   void app.register(sessionsRoutes, { prefix: `${API_PREFIX}/sessions` });
 
   app.get(

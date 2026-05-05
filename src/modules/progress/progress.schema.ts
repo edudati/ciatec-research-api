@@ -1,9 +1,13 @@
 import { z } from 'zod';
 
-export const startProgressQuerySchema = z.object({
+export const presetQuerySchema = z.object({
   game_id: z.string().uuid(),
-  /** `summary` omits per-level `config` on the trail; `current_level` still includes `config`. */
-  levels_detail: z.enum(['summary', 'full']).optional().default('summary'),
 });
 
-export type StartProgressQuery = z.infer<typeof startProgressQuerySchema>;
+export type PresetQuery = z.infer<typeof presetQuerySchema>;
+
+export const levelParamsSchema = z.object({
+  level_id: z.string().uuid(),
+});
+
+export type LevelParams = z.infer<typeof levelParamsSchema>;
