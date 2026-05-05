@@ -13,9 +13,12 @@ import { ZodError } from 'zod';
 import { env } from './config/env.js';
 import { buildSwaggerOptions } from './config/swagger.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
+import { bestbeatRoutes } from './modules/bestbeat/bestbeat.routes.js';
+import { bubblesRoutes } from './modules/bubbles/bubbles.routes.js';
 import { matchesRoutes } from './modules/matches/matches.routes.js';
 import { progressRoutes } from './modules/progress/progress.routes.js';
 import { sessionsRoutes } from './modules/sessions/sessions.routes.js';
+import { trunktiltRoutes } from './modules/trunktilt/trunktilt.routes.js';
 import { AppError } from './shared/errors/app-error.js';
 
 type JwtPluginOptions = {
@@ -126,6 +129,9 @@ export function buildApp(): FastifyInstance {
   );
   void app.register(authRoutes, { prefix: `${API_PREFIX}/auth` });
   void app.register(matchesRoutes, { prefix: `${API_PREFIX}/matches` });
+  void app.register(bubblesRoutes, { prefix: `${API_PREFIX}/bubbles` });
+  void app.register(bestbeatRoutes, { prefix: `${API_PREFIX}/bestbeat` });
+  void app.register(trunktiltRoutes, { prefix: `${API_PREFIX}/trunktilt` });
   void app.register(progressRoutes, { prefix: `${API_PREFIX}/progress` });
   void app.register(sessionsRoutes, { prefix: `${API_PREFIX}/sessions` });
 

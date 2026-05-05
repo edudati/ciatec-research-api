@@ -1,6 +1,16 @@
 # Unity Gameplay Sessions, Match e Telemetria
 
-Guia pratico para dev Unity integrar o fluxo completo de gameplay.
+Guia pratico para dev Unity (e **agentes** que geram integração) seguirem o fluxo completo de gameplay.
+
+**Leitura em par:** [`API-LEVEL-AND-PRESET-PAYLOADS.md`](./API-LEVEL-AND-PRESET-PAYLOADS.md) (preset, níveis, `progress/start`, snapshot da match).
+
+**UUIDs fixos dos jogos no seed** (fonte no código: `src/constants/game-ids.ts`):
+
+| Jogo     | `game_id` (exemplo seed) |
+| -------- | ------------------------ |
+| Bubbles  | `d601b66e-2f7d-42bd-b7e2-11baa208faf3` |
+| Bestbeat | `e802c4a6-1b2d-4e3f-8a9b-0c1d2e3f4a5b` |
+| TrunkTilt | `7c6f8a2e-91d4-4c36-b8f3-e4d5c6b7a890` |
 
 ## Objetivo deste documento
 
@@ -19,22 +29,25 @@ Ao final da implementacao no cliente, o jogo deve conseguir:
 - A API usa o `sub` do JWT como identidade do jogador.
 - `timestamp` de eventos/telemetria sempre em **epoch milissegundos** (exemplo: `1760001130120`).
 - `data` em eventos e telemetria e JSON livre.
-- Limites de batch:
+- Limites de batch (**bubbles** e **bestbeat** — JSON genérico):
   - eventos: ate 500 por request;
-  - landmarks: ate 100 frames por request;
-  - inputs: ate 100 itens por request.
+  - landmarks (telemetria JSON): ate 100 frames por request;
+  - world (telemetria JSON): ate 100 frames por request.
+- **TrunkTilt** usa payloads tipados e limites diferentes (ex.: world e pose ate **200** frames por request, eventos ate **500**); ver `docs/trunktilt/` (ex. [`API-TRUNKTILT-IMPLEMENTATION.md`](./trunktilt/API-TRUNKTILT-IMPLEMENTATION.md)).
 
 ## Fluxo recomendado no cliente (ordem)
 
 1. `POST /api/v1/sessions/start`
 2. `GET /api/v1/progress/start?game_id=<uuid>`
 3. `POST /api/v1/sessions/matches`
-4. Durante a partida:
-   - `POST /api/v1/matches/:match_id/events`
-   - `POST /api/v1/matches/:match_id/telemetry/landmarks`
-   - `POST /api/v1/matches/:match_id/telemetry/input`
+4. Durante a partida (prefixo por jogo — exemplos **bubbles** e **bestbeat**):
+   - `POST /api/v1/bubbles/matches/:match_id/events` ou `POST /api/v1/bestbeat/matches/:match_id/events`
+   - `POST /api/v1/bubbles/matches/:match_id/telemetry/landmarks` ou `.../bestbeat/.../telemetry/landmarks`
+   - `POST /api/v1/bubbles/matches/:match_id/telemetry/world` ou `.../bestbeat/.../telemetry/world`
 5. Ao encerrar:
    - `POST /api/v1/matches/:match_id/finish`
+
+TrunkTilt: `POST /api/v1/trunktilt/matches/:match_id/...` (world, pose, eventos com tipos fixos). Detalhes em `docs/trunktilt/`.
 
 ## Contratos de endpoint
 
@@ -86,8 +99,8 @@ Resposta sem sessao:
 - `GET /api/v1/progress/start?game_id=<uuid>&levels_detail=summary|full` (o segundo query param e opcional; *default* `summary`)
 - Body: vazio
 - Retorna `user_game_id`, `game`, `preset` (com `description` opcional), `current_level` (sempre com `config`, mais `unlocked`, `completed`, `is_current`, `bests`) e **`levels`**: a trilha completa do *preset* actual, com `id`, `name`, `order`, `unlocked`, `completed`, `is_current`, `bests` e, com `levels_detail=full`, `config` em cada ponto. Em `summary` nao manda o `config` de cada ponto da trilha (menor payload), mas o `current_level` continua com `config` completo.
-- Guia alinhado ao *front* / payload: [`LEVEL-AND-PRESET-PAYLOADS.md`](./LEVEL-AND-PRESET-PAYLOADS.md).
-- ID fixo do Bubli (seed): `d601b66e-2f7d-42bd-b7e2-11baa208faf3`.
+- Guia alinhado a preset/níveis: [`API-LEVEL-AND-PRESET-PAYLOADS.md`](./API-LEVEL-AND-PRESET-PAYLOADS.md).
+- `game_id` do **bubbles** na tabela no topo; usar o UUID correcto para **bestbeat** ou **trunktilt** quando aplicável.
 
 ### 4) Criar match
 
@@ -119,7 +132,7 @@ Resposta:
 
 ### 5) Enviar eventos de gameplay (batch)
 
-- `POST /api/v1/matches/:match_id/events`
+- `POST /api/v1/bubbles/matches/:match_id/events` ou `POST /api/v1/bestbeat/matches/:match_id/events` (conforme o `game_id` da match)
 - Limite: ate 500 eventos por request
 
 Body:
@@ -133,9 +146,9 @@ Body:
 }
 ```
 
-### 6) Enviar telemetria landmarks (batch)
+### 6) Enviar telemetria landmarks (batch, JSON generico)
 
-- `POST /api/v1/matches/:match_id/telemetry/landmarks`
+- `POST /api/v1/bubbles/matches/:match_id/telemetry/landmarks` ou `POST /api/v1/bestbeat/matches/:match_id/telemetry/landmarks`
 - Limite: ate 100 frames por request
 
 Body:
@@ -155,16 +168,16 @@ Body:
 }
 ```
 
-### 7) Enviar telemetria input (batch)
+### 7) Enviar telemetria world (batch, JSON generico)
 
-- `POST /api/v1/matches/:match_id/telemetry/input`
-- Limite: ate 100 inputs por request
+- `POST /api/v1/bubbles/matches/:match_id/telemetry/world` ou `POST /api/v1/bestbeat/matches/:match_id/telemetry/world`
+- Limite: ate 100 frames por request
 
 Body:
 
 ```json
 {
-  "inputs": [
+  "frames": [
     {
       "timestamp": 1760001131010,
       "device": "mouse",
@@ -224,5 +237,6 @@ Importante:
 
 - `400`: payload invalido (schema).
 - `401`: token ausente/invalido.
-- `404`: match nao encontrada ou sem permissao.
+- `403`: nivel bloqueado (ex.: criar match sem desbloquear).
+- `404`: recurso inexistente ou nao autorizado ao utilizador (user, jogo, level, match, etc., conforme o endpoint).
 - `409`: match ja finalizada (somente no `/finish`).

@@ -21,21 +21,22 @@ export const addMatchEventsBodySchema = z.object({
   events: z.array(eventItemSchema).min(1).max(500),
 });
 
-const telemetryFrameSchema = z.object({
+const telemetryLandmarkFrameSchema = z.object({
   timestamp: z.number().int().nonnegative(),
   data: z.record(z.string(), z.unknown()),
 });
 
+/** Batch JSON por frame — típico: dados de landmarks MediaPipe em `data`. */
 export const addTelemetryLandmarksBodySchema = z.object({
-  frames: z.array(telemetryFrameSchema).min(1).max(100),
+  frames: z.array(telemetryLandmarkFrameSchema).min(1).max(100),
 });
 
-const telemetryInputItemSchema = z.object({
+const telemetryWorldFrameSchema = z.object({
   timestamp: z.number().int().nonnegative(),
   device: z.string().trim().min(1),
   data: z.record(z.string(), z.unknown()),
 });
 
-export const addTelemetryInputBodySchema = z.object({
-  inputs: z.array(telemetryInputItemSchema).min(1).max(100),
+export const addTelemetryWorldBodySchema = z.object({
+  frames: z.array(telemetryWorldFrameSchema).min(1).max(100),
 });

@@ -18,6 +18,9 @@ export function buildSwaggerOptions(): SwaggerOptions {
       tags: [
         { name: 'Health', description: 'Liveness' },
         { name: 'Auth', description: 'Authentication' },
+        { name: 'Bubbles', description: 'bubbles — events, telemetry landmarks e world (JSON)' },
+        { name: 'Bestbeat', description: 'bestbeat — events, telemetry landmarks e world (JSON)' },
+        { name: 'TrunkTilt', description: 'TrunkTilt typed telemetry and events' },
       ],
       components: {
         securitySchemes: {
