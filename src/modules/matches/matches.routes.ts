@@ -10,6 +10,18 @@ export async function matchesRoutes(fastify: FastifyInstance): Promise<void> {
   const service = createMatchesService({ prisma });
   const controller = createMatchesController(service);
 
+  fastify.get(
+    '/preset',
+    { preHandler: [authenticate], schema: matchesSwagger.getPreset },
+    controller.getPreset,
+  );
+
+  fastify.get(
+    '/level',
+    { preHandler: [authenticate], schema: matchesSwagger.getLevel },
+    controller.getLevel,
+  );
+
   fastify.post(
     '/:match_id/finish',
     { preHandler: [authenticate], schema: matchesSwagger.finish },

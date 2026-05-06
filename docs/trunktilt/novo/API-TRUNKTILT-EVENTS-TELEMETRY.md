@@ -22,7 +22,7 @@
 | `403` | Partida não é do jogo TrunkTilt (`match.gameId` ≠ UUID TrunkTilt no servidor) |
 | `409` | Partida já finalizada — estas rotas deixam de aceitar dados |
 
-UUID TrunkTilt no backend (para interpretar `403`): `7c6f8a2e-91d4-4c36-b8f3-e4d5c6b7a890` — ver `src/constants/game-ids.ts`.
+UUID TrunkTilt no backend (para interpretar `403`): `a1b2c3d4-e5f6-4789-a8b0-c1d2e3f4a5b6` — ver `src/constants/game-ids.ts`.
 
 ---
 
