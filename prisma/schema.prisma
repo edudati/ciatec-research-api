@@ -182,7 +182,11 @@ model MatchResult {
   match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   score      Int
   durationMs Int      @map("duration_ms")
+  /// Elapsed ms from match.startedAt to finish (server clock), stable on idempotent replays.
+  serverDurationMs Int? @map("server_duration_ms")
   completed  Boolean
+  /// Opaque client key (e.g. UUID) for safe retries of POST .../finish. Globally unique when set.
+  idempotencyKey String? @unique @map("idempotency_key")
   createdAt  DateTime @default(now())
 
   @@map("match_results")
