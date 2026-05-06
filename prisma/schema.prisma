@@ -158,9 +158,15 @@ model Match {
   level               Level    @relation(fields: [levelId], references: [id], onDelete: Restrict)
   result              MatchResult?
   resultDetail        MatchResultDetail?
-  events              MatchEvent[]
-  telemetryInputs     TelemetryInput[]
-  telemetryLandmarks  TelemetryLandmark[]
+  bubblesEvents       BubblesEvent[]
+  bubblesLandmarks    BubblesLandmark[]
+  bubblesWorldRows    BubblesWorld[]
+  bestbeatEvents      BestbeatEvent[]
+  bestbeatLandmarks   BestbeatLandmark[]
+  bestbeatWorldRows   BestbeatWorld[]
+  trunktiltWorldRows  TrunktiltWorld[]
+  trunktiltPoseRows   TrunktiltPose[]
+  trunktiltEvents     TrunktiltEvent[]
   levelConfigSnapshot Json     @map("level_config_snapshot")
   startedAt           DateTime @default(now())
 
@@ -192,7 +198,7 @@ model MatchResultDetail {
   @@map("match_result_details")
 }
 
-model MatchEvent {
+model BubblesEvent {
   id        String   @id @default(uuid())
   matchId   String   @map("match_id")
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
@@ -202,10 +208,10 @@ model MatchEvent {
   createdAt DateTime @default(now())
 
   @@index([matchId, timestamp])
-  @@map("match_events")
+  @@map("bubbles_events")
 }
 
-model TelemetryLandmark {
+model BubblesLandmark {
   id        String   @id @default(uuid())
   matchId   String   @map("match_id")
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
@@ -214,10 +220,10 @@ model TelemetryLandmark {
   createdAt DateTime @default(now())
 
   @@index([matchId, timestamp])
-  @@map("telemetry_landmarks")
+  @@map("bubbles_landmarks")
 }
 
-model TelemetryInput {
+model BubblesWorld {
   id        String   @id @default(uuid())
   matchId   String   @map("match_id")
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
@@ -227,5 +233,104 @@ model TelemetryInput {
   createdAt DateTime @default(now())
 
   @@index([matchId, timestamp])
-  @@map("telemetry_input")
+  @@map("bubbles_world")
+}
+
+model BestbeatEvent {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  type      String
+  timestamp BigInt
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([matchId, timestamp])
+  @@map("bestbeat_events")
+}
+
+model BestbeatLandmark {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  timestamp BigInt
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([matchId, timestamp])
+  @@map("bestbeat_landmarks")
+}
+
+model BestbeatWorld {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  timestamp BigInt
+  device    String
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([matchId, timestamp])
+  @@map("bestbeat_world")
+}
+
+model TrunktiltWorld {
+  id                  String   @id @default(uuid())
+  matchId             String   @map("match_id")
+  match               Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  timestampMs         BigInt   @map("timestamp_ms")
+  frameId             Int      @map("frame_id")
+  ballPosX            Float    @map("ball_pos_x")
+  ballPosY            Float    @map("ball_pos_y")
+  ballPosZ            Float    @map("ball_pos_z")
+  ballVelX            Float    @map("ball_vel_x")
+  ballVelY            Float    @map("ball_vel_y")
+  ballVelZ            Float    @map("ball_vel_z")
+  velocityMag         Float    @map("velocity_mag")
+  accelMag            Float    @map("accel_mag")
+  tiltXX              Float    @map("tilt_x_x")
+  tiltXY              Float    @map("tilt_x_y")
+  tiltXZ              Float    @map("tilt_x_z")
+  tiltZX              Float    @map("tilt_z_x")
+  tiltZY              Float    @map("tilt_z_y")
+  tiltZZ              Float    @map("tilt_z_z")
+  inputVirtX          Float    @map("input_virt_x")
+  inputVirtZ          Float    @map("input_virt_z")
+  createdAt           DateTime @default(now())
+
+  @@unique([matchId, frameId])
+  @@index([matchId, timestampMs])
+  @@map("trunktilt_world")
+}
+
+model TrunktiltPose {
+  id           String   @id @default(uuid())
+  matchId      String   @map("match_id")
+  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  timestampMs  BigInt   @map("timestamp_ms")
+  frameId      Int      @map("frame_id")
+  landmarkId   Int      @map("landmark_id")
+  x            Float
+  y            Float
+  z            Float
+  visibility   Float?
+  createdAt    DateTime @default(now())
+
+  @@unique([matchId, frameId, landmarkId])
+  @@index([matchId, landmarkId, timestampMs])
+  @@index([matchId, frameId])
+  @@map("trunktilt_pose")
+}
+
+model TrunktiltEvent {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  type      String
+  timestamp BigInt
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([matchId, timestamp])
+  @@map("trunktilt_events")
 }

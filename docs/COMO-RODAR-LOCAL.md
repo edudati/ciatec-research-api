@@ -1,8 +1,10 @@
 # Como rodar localmente
 
-Este projeto usa **Node** + **PostgreSQL**. O Docker aqui serve só para **subir o Postgres** (e opcionalmente o pgAdmin); não é preciso saber Docker além dos comandos abaixo.
+Este projeto usa **Node** + **PostgreSQL**. O Docker Compose local sobe **PostgreSQL 18** (e opcionalmente o pgAdmin). A **API** pode rodar no host (`npm run dev`) ou **em container** — veja a seção [Rodar a API em Docker (local)](#rodar-a-api-em-docker-local).
 
-Variáveis de ambiente: veja `docs/DOT-ENV-GUIDE.md` (principalmente `DATABASE_URL`, `PORT` e `APP_URL` na mesma porta).
+Variáveis de ambiente: veja `docs/DOT-ENV-GUIDE.md` e o modelo `.env.example` na raiz do repositório (principalmente `DATABASE_URL`, `PORT` e `APP_URL` na mesma porta).
+
+**Atualização de major do Postgres no Compose:** se você já tinha dados em volume criado com Postgres 16 e trocou para 18, o container pode falhar ao subir. Nesse caso, ou faça dump/restore, ou — **só se puder perder dados locais** — `docker compose down -v` e suba de novo (`db:deploy` + `db:seed` depois).
 
 ---
 
@@ -70,6 +72,32 @@ Variáveis de ambiente: veja `docs/DOT-ENV-GUIDE.md` (principalmente `DATABASE_U
    ```
 
 Não precisa `npm install` nem `db:generate` em todo teste — só quando mudar dependências ou o `schema.prisma`. Se aparecer erro de client Prisma desatualizado: `npm run db:generate`.
+
+---
+
+## Rodar a API em Docker (local)
+
+Útil para validar a mesma imagem que será usada no servidor (Node 22 na imagem; não precisa de Node instalado só para rodar o container).
+
+1. `docker compose up -d` e, no **host**, `npm run db:deploy` (e seed se precisar), com `.env` apontando para `localhost:5432`.
+2. Build: `docker build -t ciatec-research-api:local .`
+3. Crie um arquivo **local** (não commitado), por exemplo `.env.docker`, copiando `.env.example` e altere só o banco para alcançar o Postgres no host:
+
+   ```text
+   DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/ciatec_research
+   ```
+
+   No **Linux**, use `docker run` com `--add-host=host.docker.internal:host-gateway` (Docker não resolve `host.docker.internal` por padrão).
+
+4. Suba o container:
+
+   ```bash
+   docker run --rm -p 3333:3333 --env-file .env.docker ciatec-research-api:local
+   ```
+
+5. Teste [http://localhost:3333/health](http://localhost:3333/health).
+
+Fluxo completo de deploy e atualizações: `docs/DEPLOY-E-ATUALIZACOES.md`.
 
 ---
 

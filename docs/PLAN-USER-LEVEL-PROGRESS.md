@@ -2,7 +2,7 @@
 
 Objetivo: uma **única tabela geral** `user_level_progress` (nome final ajustável) com uma linha por par **(user, level)**, suportando desbloqueio, conclusão e **métricas de melhor marca** variáveis por jogo num campo **`bests` JSONB**, sem tabelas por título.
 
-**Documentação de integração para o *front* (contratos HTTP):** [`LEVEL-AND-PRESET-PAYLOADS.md`](./LEVEL-AND-PRESET-PAYLOADS.md) e, para o fluxo Unity, [`UNITY-GAMEPLAY-SESSIONS.md`](./UNITY-GAMEPLAY-SESSIONS.md) (alinhado após a implementacao).
+**Documentação de integração para o *front* (contratos HTTP):** [`API-LEVEL-AND-PRESET-PAYLOADS.md`](./API-LEVEL-AND-PRESET-PAYLOADS.md) e, para o fluxo Unity, [`API-GAMEPLAY-SESSIONS.md`](./API-GAMEPLAY-SESSIONS.md).
 
 ---
 
@@ -95,7 +95,7 @@ Garantir que tudo acontece no **mesmo** `prisma.$transaction` para coerência.
 
 ### Fase D — Contrato e documentos
 
-- Actualizar `progress.swagger.ts` e `UNITY-GAMEPLAY-SESSIONS.md` + `LEVEL-AND-PRESET-PAYLOADS.md` (se existir) com a nova resposta.
+- Actualizar `progress.swagger.ts` e `API-GAMEPLAY-SESSIONS.md` + `API-LEVEL-AND-PRESET-PAYLOADS.md` com a nova resposta.
 - `finish`: opcionalmente resposta a incluir `bests_Updated` / snapshot para o cliente otimisticamente actualizar a UI (nice-to-have).
 
 ### Fase E — Testes

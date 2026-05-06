@@ -1,6 +1,8 @@
 # O que a API devolve: preset e level (jogo)
 
-Documento curto para o time do jogo: **que dados** a API envia em relação a **preset** e **level**, e **em que momentos**.
+Documento curto para o time do jogo e **agentes** que implementam o cliente: **que dados** a API envia sobre **preset** e **level**, e **em que momentos**.
+
+**Fluxo HTTP completo** (sessão, match, telemetria, finish): [`API-GAMEPLAY-SESSIONS.md`](./API-GAMEPLAY-SESSIONS.md). **UUIDs `game_id` do seed:** `src/constants/game-ids.ts`.
 
 **Não** existe hoje um endpoint do tipo `GET /presets/:id` ou `GET /levels/:id` no catálogo. O jogo combina:
 
@@ -8,8 +10,6 @@ Documento curto para o time do jogo: **que dados** a API envia em relação a **
 2. **`POST /api/v1/sessions/matches`** com `level_id` — só se o nível estiver **desbloqueado**; devolve a **config da fase** fixada num *snapshot* para a partida.
 
 Detalhe de implementação no servidor: [`PLAN-USER-LEVEL-PROGRESS.md`](./PLAN-USER-LEVEL-PROGRESS.md) (secção 7, UX).
-
-Fluxo geral: [`UNITY-GAMEPLAY-SESSIONS.md`](./UNITY-GAMEPLAY-SESSIONS.md).
 
 Todas as rotas de gameplay requerem `Authorization: Bearer <accessToken>`.
 
@@ -95,9 +95,9 @@ O jogo indica **explicitamente** qual fase vai jogar com `level_id` (e `game_id`
 
 A API confirma que o level existe e que pertence ao `game_id` indicado. Caso contrário responde **404**. Se o nível **não** estiver **desbloqueado** para o utilizador, responde **403** (código de erro padrão da API, p.ex. `FORBIDDEN`).
 
-### O que a API devolve (200 / 201)
+### O que a API devolve (`201 Created`)
 
-A resposta é o **registo de match** (não o mesmo objecto de `current_level`):
+A API responde sempre **`201`** com o corpo do **registo de match** (não o mesmo objecto de `current_level`):
 
 | Campo | Conteúdo |
 | --- | --- |
@@ -135,4 +135,4 @@ Exemplo mínimo:
 | Trocar de *preset* via API? | Não exposto hoje; o preset vem de `user_games` (na primeira ida: o *default* do jogo + primeiro *level* por `order`) |
 | Progresso linear? | *Finish* com `completed: true` no *level* *actual* desbloqueia o seguinte e (quando aplica) avança o *cursor* em `user_games` |
 
-Mais pormenores de sessão, eventos e finish: [`UNITY-GAMEPLAY-SESSIONS.md`](./UNITY-GAMEPLAY-SESSIONS.md). Modelo de dados: [`GAME-OVERVIEW.md`](./GAME-OVERVIEW.md).
+Mais pormenores de sessão, eventos, telemetria e finish: [`API-GAMEPLAY-SESSIONS.md`](./API-GAMEPLAY-SESSIONS.md). Modelo de dados: [`GAME-OVERVIEW.md`](./GAME-OVERVIEW.md).

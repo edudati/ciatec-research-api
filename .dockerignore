@@ -1,0 +1,26 @@
+node_modules
+dist
+coverage
+.git
+.gitignore
+
+# Segredos e env local
+.env
+.env.*
+!.env.example
+
+# Logs e cache
+*.log
+npm-debug.log*
+.npm
+.eslintcache
+
+# IDE e SO
+.vscode
+.idea
+*.swp
+.DS_Store
+Thumbs.db
+
+# Documentação (não entra na imagem)
+docs

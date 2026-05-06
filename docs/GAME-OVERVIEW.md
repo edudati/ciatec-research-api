@@ -13,7 +13,7 @@ Este documento define a estratégia de banco de dados e APIs para um package de 
 - Sessions diárias agrupando todas as partidas do jogador no dia
 - Snapshot imutável da configuração do level no momento da partida
 - Resultados com base comum mais extensão específica por jogo
-- Telemetria separada por natureza: landmarks de articulações e inputs de interface
+- Telemetria separada por natureza: **landmarks** (articulações / MediaPipe em JSON) e **world** (interface / estado do mundo em JSON genérico)
 - Eventos de jogo globais com tipo e dados livres por jogo
 
 ---
@@ -79,8 +79,8 @@ Uma session representa um dia de jogo. Todas as partidas realizadas no mesmo dia
 | `match_results` | Resultado base da partida | id, match_id, score, duration_ms, completed (bool) |
 | `match_result_details` | Resultado específico por jogo (1:1 por match) | id, match_id (unique), data (JSONB), created_at |
 | `match_events` | Eventos de gameplay em batch | id, match_id, type, timestamp, data (JSONB) |
-| `telemetry_input` | Telemetria de interface em batch | id, match_id, timestamp, device, data (JSONB) |
-| `telemetry_landmarks` | Telemetria de articulacoes em batch | id, match_id, timestamp, data (JSONB) |
+| `telemetry_world` | Telemetria de mundo/interface em batch | id, match_id, timestamp, device, data (JSONB) |
+| `telemetry_landmarks` | Telemetria de landmarks / articulações em batch | id, match_id, timestamp, data (JSONB) |
 
 
 **Sobre o `level_config_snapshot`:**
@@ -109,7 +109,7 @@ Registro global de eventos em tempo real durante a partida. O campo `type` ident
 
 A telemetria é dividida em duas tabelas separadas pois possuem natureza completamente diferente em volume, frequência e estrutura de dados.
 
-#### Landmarks — Articulações em Séries Temporais
+#### Landmarks — Articulações em séries temporais (`telemetry_landmarks`)
 
 | Campo | Tipo | Descrição |
 |---|---|---|
@@ -123,13 +123,13 @@ A telemetria é dividida em duas tabelas separadas pois possuem natureza complet
 - Definir frequência de captura antes de implementar: 30fps, 10fps ou por evento
 - Para volumes grandes em produção avaliar TimescaleDB ou armazenamento em S3
 
-#### Input de Interface — Teclado, Mouse, Touch e Joystick
+#### World — Interface / estado do jogo (`telemetry_world`)
 
 | Campo | Tipo | Descrição |
 |---|---|---|
 | `id` | UUID | Identificador único |
 | `match_id` | FK | Partida associada |
-| `timestamp` | BIGINT | Momento do input em epoch milissegundos |
+| `timestamp` | BIGINT | Momento da amostra em epoch milissegundos |
 | `device` | VARCHAR | keyboard, mouse, touch ou joystick |
 | `data` | JSONB | Ex: `{key: "space", pressure: 0.8}` ou `{x: 120, y: 340, drag_ms: 200}` |
 
@@ -214,10 +214,10 @@ POST /api/v1/matches/:match_id/finish
 
 ### 3.4 Registro de Eventos
 
-Endpoint para envio de eventos durante a partida. Aceita batch para reduzir o número de requisições ao servidor.
+Endpoint para envio de eventos durante a partida (prefixo por jogo, ex.: bubbles ou bestbeat).
 
 ```
-POST /api/v1/matches/:match_id/events
+POST /api/v1/bubbles/matches/:match_id/events
 ```
 
 **Body:**
@@ -232,10 +232,12 @@ POST /api/v1/matches/:match_id/events
 
 ---
 
-### 3.5 Telemetria — Landmarks
+### 3.5 Telemetria — Landmarks (por jogo)
+
+Exemplo para o jogo **bubbles** (análogo em `/api/v1/bestbeat/...`):
 
 ```
-POST /api/v1/matches/:match_id/telemetry/landmarks
+POST /api/v1/bubbles/matches/:match_id/telemetry/landmarks
 ```
 
 **Body:**
@@ -255,16 +257,16 @@ POST /api/v1/matches/:match_id/telemetry/landmarks
 
 ---
 
-### 3.6 Telemetria — Input de Interface
+### 3.6 Telemetria — World (por jogo)
 
 ```
-POST /api/v1/matches/:match_id/telemetry/input
+POST /api/v1/bubbles/matches/:match_id/telemetry/world
 ```
 
 **Body:**
 ```json
 {
-  "inputs": [
+  "frames": [
     { "timestamp": "2025-04-15T10:00:01.010Z", "device": "mouse", "data": { "x": 120, "y": 340, "drag_ms": 200 } },
     { "timestamp": "2025-04-15T10:00:01.200Z", "device": "keyboard", "data": { "key": "space", "pressure": 0.8 } }
   ]
@@ -272,7 +274,7 @@ POST /api/v1/matches/:match_id/telemetry/input
 ```
 
 **Regra de batch:**
-- Maximo de `100` inputs por request
+- Maximo de `100` frames por request
 
 ---
 
@@ -291,10 +293,11 @@ Status rapido do que ja foi implementado na API para manter este documento adere
 - Finalizacao de match: `POST /api/v1/matches/:match_id/finish`
   - cria `match_results` + `match_result_details` (1:1)
   - segunda finalizacao retorna `409`
-- Eventos de gameplay em batch: `POST /api/v1/matches/:match_id/events`
-- Telemetria em batch:
-  - `POST /api/v1/matches/:match_id/telemetry/landmarks` (max 100 frames)
-  - `POST /api/v1/matches/:match_id/telemetry/input` (max 100 inputs)
+- Eventos de gameplay em batch (por jogo): `POST /api/v1/bubbles/matches/:match_id/events`, `POST /api/v1/bestbeat/matches/:match_id/events`
+- Telemetria JSON em batch (por jogo):
+  - `POST /api/v1/{bubbles|bestbeat}/matches/:match_id/telemetry/landmarks` (max 100 frames)
+  - `POST /api/v1/{bubbles|bestbeat}/matches/:match_id/telemetry/world` (max 100 frames)
+- TrunkTilt: telemetria tipada e eventos em `/api/v1/trunktilt/matches/...`
 
 ---
 
