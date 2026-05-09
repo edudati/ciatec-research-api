@@ -26,6 +26,7 @@ FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3333
 
 RUN apt-get update -y \
   && apt-get install -y openssl \
@@ -49,4 +50,9 @@ USER nodejs
 
 EXPOSE 3333
 
-CMD ["node", "dist/server.js"]
+# Runtime: defina DATABASE_URL, JWT_*, APP_URL, etc. (ver src/config/env.ts).
+# migrate deploy aplica migrações pendentes antes de subir o servidor.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD node -e "const p=process.env.PORT||'3333';fetch('http://127.0.0.1:'+p+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["sh", "-c", "npx prisma migrate deploy && exec node dist/server.js"]
