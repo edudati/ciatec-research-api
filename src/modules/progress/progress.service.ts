@@ -28,7 +28,10 @@ export function createProgressService({ prisma }: ProgressServiceDeps) {
     async start(input: { userId: string; gameId: string; levelsDetail: LevelsDetail }) {
       const [user, game] = await Promise.all([
         prisma.user.findUnique({ where: { id: input.userId }, select: { id: true } }),
-        prisma.game.findUnique({ where: { id: input.gameId }, select: { id: true, name: true } }),
+        prisma.game.findFirst({
+          where: { id: input.gameId, isActive: true, isDeleted: false },
+          select: { id: true, name: true },
+        }),
       ]);
 
       if (!user) {
@@ -40,13 +43,7 @@ export function createProgressService({ prisma }: ProgressServiceDeps) {
 
       let userGame = await prisma.userGame.findUnique({
         where: { userId_gameId: { userId: input.userId, gameId: input.gameId } },
-        include: {
-          game: { select: { id: true, name: true } },
-          preset: { select: { id: true, name: true, description: true } },
-          currentLevel: {
-            select: { id: true, name: true, order: true, config: true },
-          },
-        },
+        select: { id: true, gameId: true, presetId: true, currentLevelId: true },
       });
 
       if (!userGame) {
@@ -62,13 +59,13 @@ export function createProgressService({ prisma }: ProgressServiceDeps) {
         };
 
         let firstPreset = await prisma.preset.findFirst({
-          where: { gameId: input.gameId, isDefault: true },
+          where: { gameId: input.gameId, isDefault: true, isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } },
           orderBy: { id: 'asc' },
           select: selectPreset,
         });
         if (!firstPreset) {
           firstPreset = await prisma.preset.findFirst({
-            where: { gameId: input.gameId },
+            where: { gameId: input.gameId, isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } },
             orderBy: { id: 'asc' },
             select: selectPreset,
           });
@@ -90,20 +87,32 @@ export function createProgressService({ prisma }: ProgressServiceDeps) {
             presetId: firstPreset.id,
             currentLevelId: firstLevel.id,
           },
-          include: {
-            game: { select: { id: true, name: true } },
-            preset: { select: { id: true, name: true, description: true } },
-            currentLevel: {
-              select: { id: true, name: true, order: true, config: true },
-            },
-          },
+          select: { id: true, gameId: true, presetId: true, currentLevelId: true },
         });
       }
 
       await ensureFirstLevelUnlockedInPreset(prisma, input.userId, userGame.presetId);
 
+      const [preset, currentLevel] = await Promise.all([
+        prisma.preset.findFirst({
+          where: { id: userGame.presetId, isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } },
+          select: { id: true, name: true, description: true },
+        }),
+        prisma.level.findFirst({
+          where: { id: userGame.currentLevelId, presetId: userGame.presetId, isActive: true, isDeleted: false, preset: { isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } } },
+          select: { id: true, name: true, order: true, config: true },
+        }),
+      ]);
+
+      if (!preset) {
+        throw new NotFoundError('Preset not found');
+      }
+      if (!currentLevel) {
+        throw new NotFoundError('Current level not found');
+      }
+
       const allLevels = await prisma.level.findMany({
-        where: { presetId: userGame.presetId },
+        where: { presetId: userGame.presetId, isActive: true, isDeleted: false, preset: { isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } } },
         orderBy: { order: 'asc' },
         select:
           input.levelsDetail === 'full'
@@ -138,10 +147,10 @@ export function createProgressService({ prisma }: ProgressServiceDeps) {
 
       const currentRow = pMap.get(userGame.currentLevelId);
       const currentLevelOut = {
-        id: userGame.currentLevel.id,
-        name: userGame.currentLevel.name,
-        order: userGame.currentLevel.order,
-        config: userGame.currentLevel.config,
+        id: currentLevel.id,
+        name: currentLevel.name,
+        order: currentLevel.order,
+        config: currentLevel.config,
         unlocked: currentRow?.unlocked ?? false,
         completed: currentRow?.completed ?? false,
         is_current: true,
@@ -150,11 +159,11 @@ export function createProgressService({ prisma }: ProgressServiceDeps) {
 
       return {
         user_game_id: userGame.id,
-        game: userGame.game,
+        game: { id: game.id, name: game.name },
         preset: {
-          id: userGame.preset.id,
-          name: userGame.preset.name,
-          description: userGame.preset.description,
+          id: preset.id,
+          name: preset.name,
+          description: preset.description,
         },
         current_level: currentLevelOut,
         levels: allLevels.map((l) => buildTrailItem(l)),

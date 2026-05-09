@@ -122,16 +122,21 @@ export function createSessionsService({ prisma }: SessionsServiceDeps) {
         throw new NotFoundError('User not found');
       }
 
-      const game = await prisma.game.findUnique({
-        where: { id: input.gameId },
+      const game = await prisma.game.findFirst({
+        where: { id: input.gameId, isActive: true, isDeleted: false },
         select: { id: true, name: true },
       });
       if (!game) {
         throw new NotFoundError('Game not found');
       }
 
-      const level = await prisma.level.findUnique({
-        where: { id: input.levelId },
+      const level = await prisma.level.findFirst({
+        where: {
+          id: input.levelId,
+          isActive: true,
+          isDeleted: false,
+          preset: { isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } },
+        },
         select: {
           id: true,
           config: true,
