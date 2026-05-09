@@ -14,7 +14,12 @@ export function buildSwaggerOptions(): SwaggerOptions {
           'REST API. Auth uses access (Bearer) + refresh JWTs; see `docs/AUTH-FLOW.md` for client flow.',
         version: '1.0.0',
       },
-      servers: [{ url: serverUrl, description: 'This server' }],
+      servers: [
+        // Prefer same-origin so Swagger UI works when accessed via IP/localhost
+        // and avoids browser blocks when the docs host differs from APP_URL.
+        { url: '/', description: 'Same origin' },
+        { url: serverUrl, description: 'Configured APP_URL' },
+      ],
       tags: [
         { name: 'Health', description: 'Liveness' },
         { name: 'Auth', description: 'Authentication' },

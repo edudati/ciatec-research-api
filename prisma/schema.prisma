@@ -9,19 +9,21 @@ datasource db {
 enum UserRole {
   ADMIN
   RESEARCHER
+  PI
+  PARTICIPANT
   PLAYER
 }
 
 model User {
-  id        String     @id @default(uuid())
-  name      String
-  role      UserRole   @default(PLAYER)
-  authUser  AuthUser?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  userGames               UserGame[]
-  sessions                Session[]
-  userLevelProgress   UserLevelProgress[]
+  id                String              @id @default(uuid())
+  name              String
+  role              UserRole            @default(PLAYER)
+  authUser          AuthUser?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  userGames         UserGame[]
+  sessions          Session[]
+  userLevelProgress UserLevelProgress[]
 
   @@map("users")
 }
@@ -56,6 +58,9 @@ model Game {
   name        String
   description String?
   createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  isActive    Boolean    @default(true)
+  isDeleted   Boolean    @default(false)
   presets     Preset[]
   userGames   UserGame[]
   matches     Match[]
@@ -70,6 +75,10 @@ model Preset {
   name        String
   description String?
   isDefault   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  isActive    Boolean    @default(true)
+  isDeleted   Boolean    @default(false)
   levels      Level[]
   userGames   UserGame[]
 
@@ -79,18 +88,22 @@ model Preset {
 }
 
 model Level {
-  id                 String     @id @default(uuid())
-  presetId            String
-  preset              Preset     @relation(fields: [presetId], references: [id], onDelete: Cascade)
-  name                String
-  order                Int        @map("order")
-  config              Json
-  userGames            UserGame[]        @relation("CurrentLevel")
-  matches             Match[]
-  userLevelProgress   UserLevelProgress[]
+  id                String              @id @default(uuid())
+  presetId          String
+  preset            Preset              @relation(fields: [presetId], references: [id], onDelete: Cascade)
+  name              String
+  order             Int                 @map("order")
+  config            Json
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  isActive          Boolean             @default(true)
+  isDeleted         Boolean             @default(false)
+  userGames         UserGame[]          @relation("CurrentLevel")
+  matches           Match[]
+  userLevelProgress UserLevelProgress[]
 
-  @@index([presetId])
   @@unique([presetId, order])
+  @@index([presetId])
   @@map("levels")
 }
 
@@ -107,11 +120,11 @@ model UserGame {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  @@unique([userId, gameId])
   @@index([userId])
   @@index([gameId])
   @@index([presetId])
   @@index([currentLevelId])
-  @@unique([userId, gameId])
   @@map("user_games")
 }
 
@@ -136,26 +149,26 @@ model UserLevelProgress {
 }
 
 model Session {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionDate DateTime @map("session_date") @db.Date
-  startedAt DateTime @default(now())
-  matches   Match[]
+  startedAt   DateTime @default(now())
+  matches     Match[]
 
-  @@index([userId])
   @@unique([userId, sessionDate])
+  @@index([userId])
   @@map("sessions")
 }
 
 model Match {
-  id                  String   @id @default(uuid())
+  id                  String             @id @default(uuid())
   sessionId           String
   gameId              String
   levelId             String
-  session             Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  game                Game     @relation(fields: [gameId], references: [id], onDelete: Restrict)
-  level               Level    @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  session             Session            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  game                Game               @relation(fields: [gameId], references: [id], onDelete: Restrict)
+  level               Level              @relation(fields: [levelId], references: [id], onDelete: Restrict)
   result              MatchResult?
   resultDetail        MatchResultDetail?
   bubblesEvents       BubblesEvent[]
@@ -167,8 +180,8 @@ model Match {
   trunktiltWorldRows  TrunktiltWorld[]
   trunktiltPoseRows   TrunktiltPose[]
   trunktiltEvents     TrunktiltEvent[]
-  levelConfigSnapshot Json     @map("level_config_snapshot")
-  startedAt           DateTime @default(now())
+  levelConfigSnapshot Json               @map("level_config_snapshot")
+  startedAt           DateTime           @default(now())
 
   @@index([sessionId])
   @@index([gameId])
@@ -177,17 +190,17 @@ model Match {
 }
 
 model MatchResult {
-  id         String   @id @default(uuid())
-  matchId    String   @unique
-  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  score      Int
-  durationMs Int      @map("duration_ms")
+  id               String   @id @default(uuid())
+  matchId          String   @unique
+  match            Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  score            Int
+  durationMs       Int      @map("duration_ms")
   /// Elapsed ms from match.startedAt to finish (server clock), stable on idempotent replays.
-  serverDurationMs Int? @map("server_duration_ms")
-  completed  Boolean
+  serverDurationMs Int?     @map("server_duration_ms")
+  completed        Boolean
   /// Opaque client key (e.g. UUID) for safe retries of POST .../finish. Globally unique when set.
-  idempotencyKey String? @unique @map("idempotency_key")
-  createdAt  DateTime @default(now())
+  idempotencyKey   String?  @unique @map("idempotency_key")
+  createdAt        DateTime @default(now())
 
   @@map("match_results")
 }
@@ -279,28 +292,28 @@ model BestbeatWorld {
 }
 
 model TrunktiltWorld {
-  id                  String   @id @default(uuid())
-  matchId             String   @map("match_id")
-  match               Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  timestampMs         BigInt   @map("timestamp_ms")
-  frameId             Int      @map("frame_id")
-  ballPosX            Float    @map("ball_pos_x")
-  ballPosY            Float    @map("ball_pos_y")
-  ballPosZ            Float    @map("ball_pos_z")
-  ballVelX            Float    @map("ball_vel_x")
-  ballVelY            Float    @map("ball_vel_y")
-  ballVelZ            Float    @map("ball_vel_z")
-  velocityMag         Float    @map("velocity_mag")
-  accelMag            Float    @map("accel_mag")
-  tiltXX              Float    @map("tilt_x_x")
-  tiltXY              Float    @map("tilt_x_y")
-  tiltXZ              Float    @map("tilt_x_z")
-  tiltZX              Float    @map("tilt_z_x")
-  tiltZY              Float    @map("tilt_z_y")
-  tiltZZ              Float    @map("tilt_z_z")
-  inputVirtX          Float    @map("input_virt_x")
-  inputVirtZ          Float    @map("input_virt_z")
-  createdAt           DateTime @default(now())
+  id          String   @id @default(uuid())
+  matchId     String   @map("match_id")
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  timestampMs BigInt   @map("timestamp_ms")
+  frameId     Int      @map("frame_id")
+  ballPosX    Float    @map("ball_pos_x")
+  ballPosY    Float    @map("ball_pos_y")
+  ballPosZ    Float    @map("ball_pos_z")
+  ballVelX    Float    @map("ball_vel_x")
+  ballVelY    Float    @map("ball_vel_y")
+  ballVelZ    Float    @map("ball_vel_z")
+  velocityMag Float    @map("velocity_mag")
+  accelMag    Float    @map("accel_mag")
+  tiltXX      Float    @map("tilt_x_x")
+  tiltXY      Float    @map("tilt_x_y")
+  tiltXZ      Float    @map("tilt_x_z")
+  tiltZX      Float    @map("tilt_z_x")
+  tiltZY      Float    @map("tilt_z_y")
+  tiltZZ      Float    @map("tilt_z_z")
+  inputVirtX  Float    @map("input_virt_x")
+  inputVirtZ  Float    @map("input_virt_z")
+  createdAt   DateTime @default(now())
 
   @@unique([matchId, frameId])
   @@index([matchId, timestampMs])
@@ -308,17 +321,17 @@ model TrunktiltWorld {
 }
 
 model TrunktiltPose {
-  id           String   @id @default(uuid())
-  matchId      String   @map("match_id")
-  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  timestampMs  BigInt   @map("timestamp_ms")
-  frameId      Int      @map("frame_id")
-  landmarkId   Int      @map("landmark_id")
-  x            Float
-  y            Float
-  z            Float
-  visibility   Float?
-  createdAt    DateTime @default(now())
+  id          String   @id @default(uuid())
+  matchId     String   @map("match_id")
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  timestampMs BigInt   @map("timestamp_ms")
+  frameId     Int      @map("frame_id")
+  landmarkId  Int      @map("landmark_id")
+  x           Float
+  y           Float
+  z           Float
+  visibility  Float?
+  createdAt   DateTime @default(now())
 
   @@unique([matchId, frameId, landmarkId])
   @@index([matchId, landmarkId, timestampMs])

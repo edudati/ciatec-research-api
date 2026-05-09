@@ -125,7 +125,7 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
     async getPreset(input: { userId: string; gameId: string }) {
       const [user, game] = await Promise.all([
         prisma.user.findUnique({ where: { id: input.userId }, select: { id: true } }),
-        prisma.game.findUnique({ where: { id: input.gameId }, select: { id: true } }),
+        prisma.game.findFirst({ where: { id: input.gameId, isActive: true, isDeleted: false }, select: { id: true } }),
       ]);
 
       if (!user) {
@@ -135,38 +135,23 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
         throw new NotFoundError('Game not found');
       }
 
-      const selectUserGame = {
-        id: true,
-        gameId: true,
-        presetId: true,
-        currentLevelId: true,
-        preset: {
-          select: {
-            id: true,
-            gameId: true,
-            name: true,
-            description: true,
-            isDefault: true,
-            levels: {
-              orderBy: { order: 'asc' as const },
-              select: { id: true, presetId: true, name: true, order: true },
-            },
-          },
-        },
-      } as const;
-
       let userGame = await prisma.userGame.findUnique({
         where: { userId_gameId: { userId: input.userId, gameId: input.gameId } },
-        select: selectUserGame,
+        select: { id: true, gameId: true, presetId: true, currentLevelId: true },
       });
 
       if (!userGame) {
         const firstPreset = await prisma.preset.findFirst({
-          where: { gameId: input.gameId },
+          where: { gameId: input.gameId, isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } },
           orderBy: [{ isDefault: 'desc' }, { id: 'asc' }],
           select: {
             id: true,
-            levels: { orderBy: { order: 'asc' }, take: 1, select: { id: true } },
+            levels: {
+              where: { isActive: true, isDeleted: false },
+              orderBy: { order: 'asc' },
+              take: 1,
+              select: { id: true },
+            },
           },
         });
 
@@ -186,20 +171,34 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
             presetId: firstPreset.id,
             currentLevelId: firstLevel.id,
           },
-          select: selectUserGame,
+          select: { id: true, gameId: true, presetId: true, currentLevelId: true },
         });
       }
+
+      const preset = await prisma.preset.findFirst({
+        where: { id: userGame.presetId, isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } },
+        select: { id: true, gameId: true, name: true, description: true, isDefault: true },
+      });
+      if (!preset) {
+        throw new NotFoundError('Preset not found');
+      }
+
+      const levels = await prisma.level.findMany({
+        where: { presetId: preset.id, isActive: true, isDeleted: false, preset: { isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } } },
+        orderBy: { order: 'asc' },
+        select: { id: true, presetId: true, name: true, order: true },
+      });
 
       return {
         user_game_id: userGame.id,
         game_id: userGame.gameId,
         preset: {
-          id: userGame.preset.id,
-          game_id: userGame.preset.gameId,
-          name: userGame.preset.name,
-          description: userGame.preset.description,
-          is_default: userGame.preset.isDefault,
-          levels: userGame.preset.levels.map((l) => ({
+          id: preset.id,
+          game_id: preset.gameId,
+          name: preset.name,
+          description: preset.description,
+          is_default: preset.isDefault,
+          levels: levels.map((l) => ({
             id: l.id,
             preset_id: l.presetId,
             name: l.name,
@@ -212,7 +211,13 @@ export function createMatchesService({ prisma }: MatchesServiceDeps) {
 
     async getLevel(input: { presetId: string; levelId: string }) {
       const level = await prisma.level.findFirst({
-        where: { id: input.levelId, presetId: input.presetId },
+        where: {
+          id: input.levelId,
+          presetId: input.presetId,
+          isActive: true,
+          isDeleted: false,
+          preset: { isActive: true, isDeleted: false, game: { isActive: true, isDeleted: false } },
+        },
         select: { id: true, presetId: true, name: true, order: true, config: true },
       });
 
