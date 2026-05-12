@@ -18,18 +18,18 @@ export async function bubblesRoutes(fastify: FastifyInstance): Promise<void> {
   const controller = createGameBatchController(service);
 
   fastify.post(
+    '/matches/:match_id/telemetry/world',
+    { preHandler: [authenticate], schema: swagger.addWorldTelemetry },
+    controller.addWorldTelemetry,
+  );
+  fastify.post(
+    '/matches/:match_id/telemetry/pose',
+    { preHandler: [authenticate], schema: swagger.addPoseTelemetry },
+    controller.addPoseTelemetry,
+  );
+  fastify.post(
     '/matches/:match_id/events',
     { preHandler: [authenticate], schema: swagger.addEvents },
     controller.addEvents,
-  );
-  fastify.post(
-    '/matches/:match_id/telemetry/landmarks',
-    { preHandler: [authenticate], schema: swagger.addTelemetryLandmarks },
-    controller.addTelemetryLandmarks,
-  );
-  fastify.post(
-    '/matches/:match_id/telemetry/world',
-    { preHandler: [authenticate], schema: swagger.addTelemetryWorld },
-    controller.addTelemetryWorld,
   );
 }

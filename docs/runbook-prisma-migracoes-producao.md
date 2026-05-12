@@ -1,6 +1,10 @@
 # Runbook: migrações Prisma, drift e produção
 
+**Índice:** [docs/README.md](./README.md) · [AGENTS.md](../AGENTS.md)
+
 Este documento orienta **agentes** (ou humanos) a **diagnosticar** problemas de migração, **comparar** o estado da base com a **versão do código** que vai para produção e **corrigir** o ambiente alvo quando houver inconsistência.
+
+Antes de abrir PR para `main`, cumprir primeiro o checklist fixo em **[PR-PRODUCTION-READINESS.md](./PR-PRODUCTION-READINESS.md)**; este runbook entra quando há falha ou ambiguidade após esse fluxo.
 
 ---
 

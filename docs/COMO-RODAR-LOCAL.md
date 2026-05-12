@@ -1,5 +1,7 @@
 # Como rodar localmente
 
+**Índice:** [docs/README.md](./README.md) · **agentes:** [AGENTS.md](../AGENTS.md)
+
 Este projeto usa **Node** + **PostgreSQL**. O Docker Compose local sobe **PostgreSQL 18** (e opcionalmente o pgAdmin). A **API** pode rodar no host (`npm run dev`) ou **em container** — veja a seção [Rodar a API em Docker (local)](#rodar-a-api-em-docker-local).
 
 Variáveis de ambiente: veja `docs/DOT-ENV-GUIDE.md` e o modelo `.env.example` na raiz do repositório (principalmente `DATABASE_URL`, `PORT` e `APP_URL` na mesma porta).

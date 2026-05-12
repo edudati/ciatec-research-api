@@ -54,22 +54,22 @@ export const addMatchEventsBodySchema = z.object({
   events: z.array(eventItemSchema).min(1).max(500),
 });
 
-const telemetryLandmarkFrameSchema = z.object({
+const poseTelemetryFrameSchema = z.object({
   timestamp: z.number().int().nonnegative(),
   data: z.record(z.string(), z.unknown()),
 });
 
-/** Batch JSON por frame — típico: dados de landmarks MediaPipe em `data`. */
-export const addTelemetryLandmarksBodySchema = z.object({
-  frames: z.array(telemetryLandmarkFrameSchema).min(1).max(100),
+/** Batch JSON por frame — típico: landmarks MediaPipe (ou equivalente) em `data`. */
+export const addPoseTelemetryBodySchema = z.object({
+  frames: z.array(poseTelemetryFrameSchema).min(1).max(100),
 });
 
-const telemetryWorldFrameSchema = z.object({
+const worldTelemetryFrameSchema = z.object({
   timestamp: z.number().int().nonnegative(),
   device: z.string().trim().min(1),
   data: z.record(z.string(), z.unknown()),
 });
 
-export const addTelemetryWorldBodySchema = z.object({
-  frames: z.array(telemetryWorldFrameSchema).min(1).max(100),
+export const addWorldTelemetryBodySchema = z.object({
+  frames: z.array(worldTelemetryFrameSchema).min(1).max(100),
 });

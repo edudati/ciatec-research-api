@@ -31,7 +31,6 @@ export async function catalogRoutes(fastify: FastifyInstance): Promise<void> {
   const catalogWrite = [authenticate, requireRole('ADMIN', 'RESEARCHER')];
   fastify.post('/games', { preHandler: catalogWrite, schema: catalogSwagger.createGame }, controller.createGame);
   fastify.patch('/games/:game_id', { preHandler: catalogWrite, schema: catalogSwagger.updateGame }, controller.updateGame);
-  fastify.delete('/games/:game_id', { preHandler: catalogWrite, schema: catalogSwagger.deleteGame }, controller.deleteGame);
 
   fastify.post('/presets', { preHandler: catalogWrite, schema: catalogSwagger.createPreset }, controller.createPreset);
   fastify.patch(

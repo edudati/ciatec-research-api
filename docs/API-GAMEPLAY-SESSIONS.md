@@ -33,7 +33,7 @@ Ao final da implementacao no cliente, o jogo deve conseguir:
   - eventos: ate 500 por request;
   - landmarks (telemetria JSON): ate 100 frames por request;
   - world (telemetria JSON): ate 100 frames por request.
-- **TrunkTilt** usa payloads tipados e limites diferentes (ex.: world e pose ate **200** frames por request, eventos ate **500**); ver `docs/trunktilt/` (ex. [`API-TRUNKTILT-IMPLEMENTATION.md`](./trunktilt/API-TRUNKTILT-IMPLEMENTATION.md)).
+- **TrunkTilt** usa payloads tipados e limites diferentes (ex.: world e pose ate **200** frames por request, eventos ate **500**); contrato em **Swagger** (tag TrunkTilt em `/docs`) e código em `src/modules/trunktilt/`.
 
 ## Fluxo recomendado no cliente (ordem)
 
@@ -42,12 +42,12 @@ Ao final da implementacao no cliente, o jogo deve conseguir:
 3. `POST /api/v1/sessions/matches`
 4. Durante a partida (prefixo por jogo — exemplos **bubbles** e **bestbeat**):
    - `POST /api/v1/bubbles/matches/:match_id/events` ou `POST /api/v1/bestbeat/matches/:match_id/events`
-   - `POST /api/v1/bubbles/matches/:match_id/telemetry/landmarks` ou `.../bestbeat/.../telemetry/landmarks`
+   - `POST /api/v1/bubbles/matches/:match_id/telemetry/pose` ou `.../bestbeat/.../telemetry/pose`
    - `POST /api/v1/bubbles/matches/:match_id/telemetry/world` ou `.../bestbeat/.../telemetry/world`
 5. Ao encerrar:
    - `POST /api/v1/matches/:match_id/finish`
 
-TrunkTilt: `POST /api/v1/trunktilt/matches/:match_id/...` (world, pose, eventos com tipos fixos). Detalhes em `docs/trunktilt/`.
+TrunkTilt: `POST /api/v1/trunktilt/matches/:match_id/...` (world, pose, eventos com tipos fixos). Detalhes no **Swagger** e em `src/modules/trunktilt/`.
 
 ## Contratos de endpoint
 
@@ -148,7 +148,7 @@ Body:
 
 ### 6) Enviar telemetria landmarks (batch, JSON generico)
 
-- `POST /api/v1/bubbles/matches/:match_id/telemetry/landmarks` ou `POST /api/v1/bestbeat/matches/:match_id/telemetry/landmarks`
+- `POST /api/v1/bubbles/matches/:match_id/telemetry/pose` ou `POST /api/v1/bestbeat/matches/:match_id/telemetry/pose`
 - Limite: ate 100 frames por request
 
 Body:

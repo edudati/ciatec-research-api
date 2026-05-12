@@ -28,7 +28,7 @@ export function buildGameBatchSwagger(gameTag: string): Record<string, FastifySc
       tags: [gameTag],
       summary: 'Add match events batch',
       description:
-        'Stores a batch of gameplay events for one match in this game’s isolated events table (bubbles_events or bestbeat_events). Match must belong to this game. Up to 500 events per request.',
+        'Stores a batch of gameplay events for one match in this game’s isolated events table. Match must belong to this game. Up to 500 events per request.',
       security: [{ bearerAuth: [] }],
       params: {
         type: 'object',
@@ -74,11 +74,11 @@ export function buildGameBatchSwagger(gameTag: string): Record<string, FastifySc
         404: { description: 'Match not found', ...appError },
       },
     },
-    addTelemetryLandmarks: {
+    addPoseTelemetry: {
       tags: [gameTag],
-      summary: 'Add telemetry landmarks batch',
+      summary: `${gameTag} pose telemetry batch`,
       description:
-        'Stores landmark telemetry frames in this game’s isolated table (bubbles_landmarks or bestbeat_landmarks). Up to 100 frames per request.',
+        'Stores per-frame pose-style samples (e.g. MediaPipe landmarks in `data`). Same path pattern as TrunkTilt `telemetry/pose`. Up to 100 frames per request.',
       security: [{ bearerAuth: [] }],
       params: {
         type: 'object',
@@ -108,7 +108,7 @@ export function buildGameBatchSwagger(gameTag: string): Record<string, FastifySc
       },
       response: {
         201: {
-          description: 'Landmark frames created',
+          description: 'Pose frames created',
           type: 'object',
           properties: {
             match_id: { type: 'string', format: 'uuid' },
@@ -123,11 +123,11 @@ export function buildGameBatchSwagger(gameTag: string): Record<string, FastifySc
         404: { description: 'Match not found', ...appError },
       },
     },
-    addTelemetryWorld: {
+    addWorldTelemetry: {
       tags: [gameTag],
-      summary: 'Add telemetry world batch',
+      summary: `${gameTag} world telemetry batch`,
       description:
-        'Stores world/interface telemetry in this game’s isolated table (bubbles_world or bestbeat_world). Up to 100 frames per request.',
+        'Stores world / device-attributed telemetry frames. Same path pattern as TrunkTilt `telemetry/world`. Up to 100 frames per request.',
       security: [{ bearerAuth: [] }],
       params: {
         type: 'object',

@@ -69,6 +69,8 @@ export const catalogSwagger: Record<string, FastifySchema> = {
   listGames: {
     tags: ['Catalog'],
     summary: 'List games (active only)',
+    description:
+      'Returns all active, non-deleted games for the client. Text search, filtering by state (e.g. is_active), and sorting are applied locally on this list — the API does not accept query parameters for those.',
     security: [{ bearerAuth: [] }],
     response: {
       200: {
@@ -127,18 +129,6 @@ export const catalogSwagger: Record<string, FastifySchema> = {
     response: {
       200: gameResponse,
       400: { description: 'Validation (Zod)', ...zodValidationError },
-      401: { description: 'Unauthorized', ...appError },
-      403: { description: 'Forbidden', ...appError },
-      404: { description: 'Game not found', ...appError },
-    },
-  },
-
-  deleteGame: {
-    tags: ['Catalog'],
-    summary: 'Soft delete game (cascades presets/levels)',
-    security: [{ bearerAuth: [] }],
-    response: {
-      204: { description: 'Deleted' },
       401: { description: 'Unauthorized', ...appError },
       403: { description: 'Forbidden', ...appError },
       404: { description: 'Game not found', ...appError },
@@ -215,7 +205,7 @@ export const catalogSwagger: Record<string, FastifySchema> = {
 
   deletePreset: {
     tags: ['Catalog'],
-    summary: 'Soft delete preset (cascades levels)',
+    summary: 'Delete preset (cascades levels)',
     security: [{ bearerAuth: [] }],
     response: {
       204: { description: 'Deleted' },
@@ -295,7 +285,7 @@ export const catalogSwagger: Record<string, FastifySchema> = {
 
   deleteLevel: {
     tags: ['Catalog'],
-    summary: 'Soft delete level',
+    summary: 'Delete level',
     security: [{ bearerAuth: [] }],
     response: {
       204: { description: 'Deleted' },

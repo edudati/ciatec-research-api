@@ -32,7 +32,6 @@ export async function adminCatalogRoutes(fastify: FastifyInstance): Promise<void
   // Write endpoints: admin CRUD (no active-only filter; reads/writes by id include soft-deleted rows)
   fastify.post('/games', { preHandler: adminOnly, schema: adminCatalogSwagger.createGame }, controller.createGame);
   fastify.patch('/games/:game_id', { preHandler: adminOnly, schema: adminCatalogSwagger.updateGame }, controller.updateGame);
-  fastify.delete('/games/:game_id', { preHandler: adminOnly, schema: adminCatalogSwagger.deleteGame }, controller.deleteGame);
 
   fastify.post('/presets', { preHandler: adminOnly, schema: adminCatalogSwagger.createPreset }, controller.createPreset);
   fastify.patch(

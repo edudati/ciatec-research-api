@@ -4,10 +4,12 @@ Documento curto para o time do jogo e **agentes** que implementam o cliente: **q
 
 **Fluxo HTTP completo** (sessão, match, telemetria, finish): [`API-GAMEPLAY-SESSIONS.md`](./API-GAMEPLAY-SESSIONS.md). **UUIDs `game_id` do seed:** `src/constants/game-ids.ts`.
 
-**Não** existe hoje um endpoint do tipo `GET /presets/:id` ou `GET /levels/:id` no catálogo. O jogo combina:
+O fluxo de **gameplay** combina (contrato fino no Swagger):
 
-1. **`GET /api/v1/progress/start?...`** — trilha completa do preset do jogador, *current level*, e **bests** por nível (ver abaixo).
+1. **`GET /api/v1/progress/start?...`** — trilha do preset do jogador, *current level*, e **bests** por nível (ver abaixo).
 2. **`POST /api/v1/sessions/matches`** com `level_id` — só se o nível estiver **desbloqueado**; devolve a **config da fase** fixada num *snapshot* para a partida.
+
+Para **admin / tooling**, o catálogo expõe também leitura de preset e level (ex.: `GET /api/v1/catalog/presets/:preset_id`, `GET /api/v1/catalog/levels/:level_id`) — ver tag **Catalog** em `/docs`.
 
 Detalhe de implementação no servidor: [`PLAN-USER-LEVEL-PROGRESS.md`](./PLAN-USER-LEVEL-PROGRESS.md) (secção 7, UX).
 

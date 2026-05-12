@@ -1,5 +1,7 @@
 # Plano de implementação: progresso e bests por level (tabela única)
 
+> **Plano de roadmap.** Para contratos HTTP e comportamento em produção, use **Swagger** (`/docs`) e os docs de integração ([`API-LEVEL-AND-PRESET-PAYLOADS.md`](./API-LEVEL-AND-PRESET-PAYLOADS.md), [`API-GAMEPLAY-SESSIONS.md`](./API-GAMEPLAY-SESSIONS.md)).
+
 Objetivo: uma **única tabela geral** `user_level_progress` (nome final ajustável) com uma linha por par **(user, level)**, suportando desbloqueio, conclusão e **métricas de melhor marca** variáveis por jogo num campo **`bests` JSONB**, sem tabelas por título.
 
 **Documentação de integração para o *front* (contratos HTTP):** [`API-LEVEL-AND-PRESET-PAYLOADS.md`](./API-LEVEL-AND-PRESET-PAYLOADS.md) e, para o fluxo Unity, [`API-GAMEPLAY-SESSIONS.md`](./API-GAMEPLAY-SESSIONS.md).
