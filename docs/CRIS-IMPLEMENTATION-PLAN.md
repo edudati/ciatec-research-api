@@ -1,5 +1,7 @@
 # RMS/CRIS Longitudinal Architecture — Incremental Implementation
 
+> **Plano de roadmap / implementação.** Não substitui o contrato em **Swagger** (`/docs`), `prisma/schema.prisma` nem [`API-DOMAIN-AND-LONGITUDINAL-ARCHITECTURE.md`](./API-DOMAIN-AND-LONGITUDINAL-ARCHITECTURE.md) como descrição do estado actual.
+
 ## Objetivo
 
 Evoluir a arquitetura atual do `ciatec-research-api` para um modelo RMS/CRIS longitudinal sem quebrar:

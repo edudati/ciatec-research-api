@@ -48,12 +48,6 @@ export function createAdminCatalogController(service: AdminCatalogService) {
       return reply.send(result);
     },
 
-    async deleteGame(request: FastifyRequest, reply: FastifyReply) {
-      const params = gameIdParamsSchema.parse(request.params);
-      await service.deleteGame(params.game_id);
-      return reply.status(204).send();
-    },
-
     async listPresets(request: FastifyRequest, reply: FastifyReply) {
       const params = gameIdParamsSchema.parse(request.params);
       const result = await service.listPresets(params.game_id);

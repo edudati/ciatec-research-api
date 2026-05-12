@@ -8,8 +8,8 @@ import { env } from '../../config/env.js';
 import { ConflictError } from '../../shared/errors/conflict-error.js';
 import { NotFoundError } from '../../shared/errors/not-found-error.js';
 import { UnauthorizedError } from '../../shared/errors/unauthorized-error.js';
-
-const BCRYPT_ROUNDS = 12;
+import { hashPassword } from './password-hash.js';
+import { toPublicUser } from './user-public.js';
 
 export type AccessPayload = { sub: string; role: UserRole };
 
@@ -83,7 +83,9 @@ export function createAuthService({ prisma, signAccessToken }: AuthServiceDeps) 
         throw new ConflictError('Email already in use');
       }
 
-      const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
+      const passwordHash = await hashPassword(input.password);
+      // TODO(email-verification): set emailVerifiedAt only after the user confirms the email (link or OTP); until then leave null and gate sensitive routes.
+      const verifiedAt = new Date();
       const { user, authUser } = await prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
           data: {
@@ -97,6 +99,7 @@ export function createAuthService({ prisma, signAccessToken }: AuthServiceDeps) 
             email: input.email,
             passwordHash,
             userId: user.id,
+            emailVerifiedAt: verifiedAt,
           },
         });
 
@@ -109,7 +112,18 @@ export function createAuthService({ prisma, signAccessToken }: AuthServiceDeps) 
       await persistRefreshToken(authUser.id, refreshToken);
 
       return {
-        user: { id: user.id, email: authUser.email, name: user.name, role: user.role },
+        user: toPublicUser({
+          id: user.id,
+          name: user.name,
+          role: user.role,
+          createdAt: user.createdAt,
+          isFirstAccess: user.isFirstAccess,
+          authUser: {
+            email: authUser.email,
+            emailVerifiedAt: authUser.emailVerifiedAt,
+            totpEnabled: authUser.totpEnabled,
+          },
+        }),
         accessToken,
         refreshToken,
       };
@@ -130,13 +144,27 @@ export function createAuthService({ prisma, signAccessToken }: AuthServiceDeps) 
       }
 
       const user = authUser.user;
+      if (user.deletedAt) {
+        throw new UnauthorizedError('Invalid credentials');
+      }
       const payload: AccessPayload = { sub: user.id, role: user.role };
       const accessToken = signAccessToken(payload);
       const refreshToken = signRefreshToken(payload);
       await persistRefreshToken(authUser.id, refreshToken);
 
       return {
-        user: { id: user.id, email: authUser.email, name: user.name, role: user.role },
+        user: toPublicUser({
+          id: user.id,
+          name: user.name,
+          role: user.role,
+          createdAt: user.createdAt,
+          isFirstAccess: user.isFirstAccess,
+          authUser: {
+            email: authUser.email,
+            emailVerifiedAt: authUser.emailVerifiedAt,
+            totpEnabled: authUser.totpEnabled,
+          },
+        }),
         accessToken,
         refreshToken,
       };
@@ -163,6 +191,10 @@ export function createAuthService({ prisma, signAccessToken }: AuthServiceDeps) 
       });
 
       if (!record) {
+        throw new UnauthorizedError('Invalid refresh token');
+      }
+
+      if (record.authUser.user.deletedAt) {
         throw new UnauthorizedError('Invalid refresh token');
       }
 
@@ -217,7 +249,9 @@ export function createAuthService({ prisma, signAccessToken }: AuthServiceDeps) 
     async me(userId: string) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        include: { authUser: true },
+        include: {
+          authUser: { select: { email: true, emailVerifiedAt: true, totpEnabled: true } },
+        },
       });
       if (!user) {
         throw new NotFoundError('User not found');
@@ -225,14 +259,22 @@ export function createAuthService({ prisma, signAccessToken }: AuthServiceDeps) 
       if (!user.authUser) {
         throw new NotFoundError('Auth user not found');
       }
+      if (user.deletedAt) {
+        throw new NotFoundError('User not found');
+      }
 
-      return {
+      return toPublicUser({
         id: user.id,
-        email: user.authUser.email,
         name: user.name,
         role: user.role,
         createdAt: user.createdAt,
-      };
+        isFirstAccess: user.isFirstAccess,
+        authUser: {
+          email: user.authUser.email,
+          emailVerifiedAt: user.authUser.emailVerifiedAt,
+          totpEnabled: user.authUser.totpEnabled,
+        },
+      });
     },
   };
 }

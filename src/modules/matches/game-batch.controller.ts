@@ -2,8 +2,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import {
   addMatchEventsBodySchema,
-  addTelemetryLandmarksBodySchema,
-  addTelemetryWorldBodySchema,
+  addPoseTelemetryBodySchema,
+  addWorldTelemetryBodySchema,
   finishMatchParamsSchema,
 } from './matches.schema.js';
 import type { MatchBatchIngestService } from './match-batch-ingest.service.js';
@@ -23,11 +23,11 @@ export function createGameBatchController(service: MatchBatchIngestService) {
       return reply.status(201).send(result);
     },
 
-    async addTelemetryLandmarks(request: FastifyRequest, reply: FastifyReply) {
+    async addPoseTelemetry(request: FastifyRequest, reply: FastifyReply) {
       const params = finishMatchParamsSchema.parse(request.params);
-      const body = addTelemetryLandmarksBodySchema.parse(request.body);
+      const body = addPoseTelemetryBodySchema.parse(request.body);
 
-      const result = await service.addTelemetryLandmarks({
+      const result = await service.addPoseTelemetry({
         userId: request.user.sub,
         matchId: params.match_id,
         frames: body.frames,
@@ -36,11 +36,11 @@ export function createGameBatchController(service: MatchBatchIngestService) {
       return reply.status(201).send(result);
     },
 
-    async addTelemetryWorld(request: FastifyRequest, reply: FastifyReply) {
+    async addWorldTelemetry(request: FastifyRequest, reply: FastifyReply) {
       const params = finishMatchParamsSchema.parse(request.params);
-      const body = addTelemetryWorldBodySchema.parse(request.body);
+      const body = addWorldTelemetryBodySchema.parse(request.body);
 
-      const result = await service.addTelemetryWorld({
+      const result = await service.addWorldTelemetry({
         userId: request.user.sub,
         matchId: params.match_id,
         frames: body.frames,

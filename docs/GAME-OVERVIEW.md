@@ -2,6 +2,8 @@
 ## Arquitetura de Dados e APIs para Serious Games
 *Documento de Estratégia Técnica — v1.0 — Abril 2025*
 
+> **Histórico / estratégia (Abril 2025).** Não é fonte normativa do contrato HTTP ou do modelo Prisma actual. Para integração use **Swagger** (`/docs`), [`FRONTEND-API-OVERVIEW.md`](./FRONTEND-API-OVERVIEW.md) e `prisma/schema.prisma`.
+
 ---
 
 ## 1. Visão Geral
@@ -237,7 +239,7 @@ POST /api/v1/bubbles/matches/:match_id/events
 Exemplo para o jogo **bubbles** (análogo em `/api/v1/bestbeat/...`):
 
 ```
-POST /api/v1/bubbles/matches/:match_id/telemetry/landmarks
+POST /api/v1/bubbles/matches/:match_id/telemetry/pose
 ```
 
 **Body:**
@@ -295,7 +297,7 @@ Status rapido do que ja foi implementado na API para manter este documento adere
   - segunda finalizacao retorna `409`
 - Eventos de gameplay em batch (por jogo): `POST /api/v1/bubbles/matches/:match_id/events`, `POST /api/v1/bestbeat/matches/:match_id/events`
 - Telemetria JSON em batch (por jogo):
-  - `POST /api/v1/{bubbles|bestbeat}/matches/:match_id/telemetry/landmarks` (max 100 frames)
+  - `POST /api/v1/{bubbles|bestbeat}/matches/:match_id/telemetry/pose` (max 100 frames)
   - `POST /api/v1/{bubbles|bestbeat}/matches/:match_id/telemetry/world` (max 100 frames)
 - TrunkTilt: telemetria tipada e eventos em `/api/v1/trunktilt/matches/...`
 

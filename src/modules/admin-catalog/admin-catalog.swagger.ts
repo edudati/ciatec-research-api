@@ -138,18 +138,6 @@ export const adminCatalogSwagger: Record<string, FastifySchema> = {
     },
   },
 
-  deleteGame: {
-    tags: ['Admin Catalog'],
-    summary: 'Soft delete game (admin; cascades presets/levels)',
-    security: [{ bearerAuth: [] }],
-    response: {
-      204: { description: 'Deleted' },
-      401: { description: 'Unauthorized', ...appError },
-      403: { description: 'Forbidden', ...appError },
-      404: { description: 'Game not found', ...appError },
-    },
-  },
-
   listPresets: {
     tags: ['Admin Catalog'],
     summary: 'List presets for game (admin: includes inactive and soft-deleted)',
@@ -222,7 +210,7 @@ export const adminCatalogSwagger: Record<string, FastifySchema> = {
 
   deletePreset: {
     tags: ['Admin Catalog'],
-    summary: 'Soft delete preset (admin; cascades levels)',
+    summary: 'Delete preset (admin; cascades levels)',
     security: [{ bearerAuth: [] }],
     response: {
       204: { description: 'Deleted' },
@@ -304,7 +292,7 @@ export const adminCatalogSwagger: Record<string, FastifySchema> = {
 
   deleteLevel: {
     tags: ['Admin Catalog'],
-    summary: 'Soft delete level (admin)',
+    summary: 'Delete level (admin)',
     security: [{ bearerAuth: [] }],
     response: {
       204: { description: 'Deleted' },

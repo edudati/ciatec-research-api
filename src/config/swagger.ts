@@ -10,8 +10,6 @@ export function buildSwaggerOptions(): SwaggerOptions {
       openapi: '3.0.3',
       info: {
         title: 'Ciatec Research API',
-        description:
-          'REST API. Auth uses access (Bearer) + refresh JWTs; see `docs/AUTH-FLOW.md` for client flow.',
         version: '1.0.0',
       },
       servers: [
@@ -23,8 +21,9 @@ export function buildSwaggerOptions(): SwaggerOptions {
       tags: [
         { name: 'Health', description: 'Liveness' },
         { name: 'Auth', description: 'Authentication' },
-        { name: 'Bubbles', description: 'bubbles — events, telemetry landmarks e world (JSON)' },
-        { name: 'Bestbeat', description: 'bestbeat — events, telemetry landmarks e world (JSON)' },
+        { name: 'Users', description: 'User directory and admin-style signup' },
+        { name: 'Bubbles', description: 'bubbles — events, pose e world (JSON)' },
+        { name: 'Bestbeat', description: 'bestbeat — events, pose e world (JSON)' },
         { name: 'TrunkTilt', description: 'TrunkTilt typed telemetry and events' },
       ],
       components: {

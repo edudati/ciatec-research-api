@@ -67,7 +67,7 @@ export function createMatchBatchIngestService({
       };
     },
 
-    async addTelemetryLandmarks(input: {
+    async addPoseTelemetry(input: {
       userId: string;
       matchId: string;
       frames: Array<{
@@ -85,8 +85,8 @@ export function createMatchBatchIngestService({
 
       const created =
         game === 'bubbles'
-          ? await prisma.bubblesLandmark.createMany({ data: payload })
-          : await prisma.bestbeatLandmark.createMany({ data: payload });
+          ? await prisma.bubblesPose.createMany({ data: payload })
+          : await prisma.bestbeatPose.createMany({ data: payload });
 
       return {
         match_id: input.matchId,
@@ -95,7 +95,7 @@ export function createMatchBatchIngestService({
       };
     },
 
-    async addTelemetryWorld(input: {
+    async addWorldTelemetry(input: {
       userId: string;
       matchId: string;
       frames: Array<{

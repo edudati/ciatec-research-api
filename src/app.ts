@@ -21,6 +21,7 @@ import { matchesRoutes } from './modules/matches/matches.routes.js';
 import { progressRoutes } from './modules/progress/progress.routes.js';
 import { sessionsRoutes } from './modules/sessions/sessions.routes.js';
 import { trunktiltRoutes } from './modules/trunktilt/trunktilt.routes.js';
+import { usersRoutes } from './modules/users/users.routes.js';
 import { AppError } from './shared/errors/app-error.js';
 
 type JwtPluginOptions = {
@@ -130,6 +131,7 @@ export function buildApp(): FastifyInstance {
     jwtOptions,
   );
   void app.register(authRoutes, { prefix: `${API_PREFIX}/auth` });
+  void app.register(usersRoutes, { prefix: `${API_PREFIX}/users` });
   void app.register(matchesRoutes, { prefix: `${API_PREFIX}/matches` });
   void app.register(progressRoutes, { prefix: `${API_PREFIX}/progress` });
   void app.register(bubblesRoutes, { prefix: `${API_PREFIX}/bubbles` });

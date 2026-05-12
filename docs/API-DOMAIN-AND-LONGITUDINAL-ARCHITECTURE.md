@@ -1,9 +1,9 @@
 # Domínio da API, dados longitudinais e RMS/CRIS
 
-Este documento complementa **[API-ARCHITECTURE-AND-CONVENTIONS.md](./API-ARCHITECTURE-AND-CONVENTIONS.md)**. Agentes e desenvolvedores devem **ler os dois** ao criar soluções novas:
+Este documento complementa **[API-ARCHITECTURE-AND-CONVENTIONS.md](./API-ARCHITECTURE-AND-CONVENTIONS.md)**. **Roteamento de leitura:** [`AGENTS.md`](../AGENTS.md) e [`docs/README.md`](./README.md).
 
-- **Convenções** → stack, formato HTTP, padrão de módulo (`routes` / `controller` / `service` / `schema` / `swagger`), auth, nomenclatura de API.
-- **Este documento** → significado do domínio, entidades e relacionamentos no PostgreSQL (Prisma), eixo longitudinal (`Session` / `Match`), telemetria por tabelas próprias, papel de **`timeline_events`**, integração entre módulos e regras ao evoluir para **projetos**, **grupos** e **participantes** no estilo RMS/CRIS.
+- **Convenções** (sempre que implementar na API) → stack, formato HTTP, padrão de módulo (`routes` / `controller` / `service` / `schema` / `swagger`), auth, nomenclatura de API.
+- **Este documento** (sob demanda: `Session` / `Match`, telemetria, progresso, catálogo longitudinal, RMS/CRIS) → significado do domínio, entidades Prisma, relacionamentos, eixo longitudinal, telemetria por tabelas próprias, papel de **`timeline_events`**, integração entre módulos e regras ao evoluir para **projetos**, **grupos** e **participantes**.
 
 Fonte de verdade do modelo atual: `prisma/schema.prisma` e registros de rotas em `src/app.ts`.
 
@@ -72,8 +72,8 @@ Transversais: `src/config`, `src/lib/prisma.ts`, `src/shared` (erros, `authentic
 
 ### Telemetria (tabelas próprias por tipo/jogo)
 
-- Bubbles: `BubblesEvent`, `BubblesLandmark`, `BubblesWorld`.
-- Bestbeat: `BestbeatEvent`, `BestbeatLandmark`, `BestbeatWorld`.
+- Bubbles: `BubblesEvent`, `BubblesPose`, `BubblesWorld`.
+- Bestbeat: `BestbeatEvent`, `BestbeatPose`, `BestbeatWorld`.
 - Trunktilt: `TrunktiltWorld`, `TrunktiltPose`, `TrunktiltEvent`.
 
 ---

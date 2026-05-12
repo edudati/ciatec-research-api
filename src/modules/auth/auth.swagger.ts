@@ -2,9 +2,9 @@ import type { FastifySchema } from 'fastify';
 
 const userRole = {
   type: 'string',
-  enum: ['PLAYER', 'RESEARCHER', 'ADMIN'],
+  enum: ['ADMIN', 'RESEARCHER', 'PI', 'PARTICIPANT', 'PLAYER'],
   description:
-    'Public register always creates PLAYER. RESEARCHER/ADMIN are for accounts created or promoted elsewhere (e.g. admin tooling, seed, DB).',
+    'Prisma `UserRole`. Public `POST /auth/register` always creates PLAYER; other roles come from admin flows, `POST /api/v1/users`, seed, or DB.',
   example: 'PLAYER',
 } as const;
 
@@ -15,8 +15,22 @@ const userPublic = {
     email: { type: 'string', format: 'email' },
     name: { type: 'string' },
     role: userRole,
+    createdAt: { type: 'string', format: 'date-time' },
+    emailVerified: {
+      type: 'boolean',
+      description:
+        'True when `emailVerifiedAt` is set on the credential row. Today all new password signups set this immediately; TODO: real email verification before setting.',
+    },
+    isFirstAccess: {
+      type: 'boolean',
+      description: 'Onboarding hint; clear via `PATCH /api/v1/users/:id` when the client completes first-run.',
+    },
+    totpEnabled: {
+      type: 'boolean',
+      description: 'Whether TOTP (authenticator app) is enabled. TODO: enforce second step on login when true.',
+    },
   },
-  required: ['id', 'email', 'name', 'role'],
+  required: ['id', 'email', 'name', 'role', 'createdAt', 'emailVerified', 'isFirstAccess', 'totpEnabled'],
 } as const;
 
 const authPairResponse = {
@@ -56,7 +70,7 @@ export const authSwagger: Record<string, FastifySchema> = {
     tags: ['Auth'],
     summary: 'Register',
     description:
-      'Creates a user with role PLAYER. Password: min 8 characters, at least one uppercase letter and one digit.',
+      'Creates a user with role PLAYER. Password: min 8 characters, at least one uppercase letter and one digit. A soft-deleted account still reserves its email until the address is changed or the row is removed from the database. `emailVerified` is set true at signup for now; TODO: send confirmation email and set only after verify.',
     body: {
       type: 'object',
       required: ['email', 'password', 'name'],
@@ -141,20 +155,12 @@ export const authSwagger: Record<string, FastifySchema> = {
   me: {
     tags: ['Auth'],
     summary: 'Current user',
-    description: 'Profile for the access token subject (`sub`).',
+    description: 'Profile for the access token subject (`sub`). Same shape as `user` in register/login.',
     security: [{ bearerAuth: [] }],
     response: {
       200: {
         description: 'OK',
-        type: 'object',
-        properties: {
-          id: { type: 'string', format: 'uuid' },
-          email: { type: 'string', format: 'email' },
-          name: { type: 'string' },
-          role: userRole,
-          createdAt: { type: 'string', format: 'date-time' },
-        },
-        required: ['id', 'email', 'name', 'role', 'createdAt'],
+        ...userPublic,
       },
       400: { description: 'Validation (Zod)', ...zodValidationError },
       401: { description: 'Missing or invalid access token', ...appError },

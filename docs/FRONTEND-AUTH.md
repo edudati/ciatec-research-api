@@ -2,12 +2,30 @@
 
 Este documento descreve como o cliente web ou mobile deve integrar **cadastro (signup)** e **login** com a Ciatec Research API, além do fluxo mínimo de tokens. Serve como referência para o time de frontend implementar autenticação de ponta a ponta.
 
-**Contrato detalhado (inglês) e notas de segurança:** [`AUTH-FLOW.md`](./AUTH-FLOW.md)  
-**Exploração interativa:** com a API em execução, abra **`/docs`** (Swagger UI).
+---
+
+## Onde está a documentação
+
+| O quê | URL |
+| --- | --- |
+| **API e documentação interativa (produção)** | [`https://api.ciatec.org`](https://api.ciatec.org) — Swagger UI em **`/docs`** |
+| **OpenAPI / Swagger em produção** | [`https://api.ciatec.org/docs`](https://api.ciatec.org/docs) |
+| **Visão geral da API (frontend)** | [`FRONTEND-API-OVERVIEW.md`](./FRONTEND-API-OVERVIEW.md) |
+
+Em **desenvolvimento local**, com o servidor a correr, a mesma UI fica em `http://localhost:<PORT>/docs` (porta habitual no projeto: **3333**; confira `PORT` / `APP_URL` no `.env`).
 
 ---
 
 ## 1. Base da URL e cabeçalhos
+
+### Ambientes
+
+| Ambiente | Base URL da API | Swagger (`/docs`) |
+| --- | --- | --- |
+| **Produção** | `https://api.ciatec.org` | [`https://api.ciatec.org/docs`](https://api.ciatec.org/docs) |
+| **Local** | `http://localhost:<PORT>` (ex.: `http://localhost:3333`) | `http://localhost:<PORT>/docs` |
+
+### Convenções
 
 | Item | Valor |
 | --- | --- |
@@ -16,12 +34,12 @@ Este documento descreve como o cliente web ou mobile deve integrar **cadastro (s
 | Corpo | JSON: `Content-Type: application/json` |
 | CORS | A API usa `cors` com `origin: true` (o navegador pode fazer requisições a partir do origin do app em desenvolvimento) |
 
-**URLs completas (exemplos):**
+### URLs completas (produção)
 
-- `POST https://<seu-host>/api/v1/auth/register`
-- `POST https://<seu-host>/api/v1/auth/login`
+- Registo: `POST https://api.ciatec.org/api/v1/auth/register`
+- Login: `POST https://api.ciatec.org/api/v1/auth/login`
 
-O host (localhost em dev ou produção) vem da configuração do ambiente; não é fixo no código do cliente.
+Em **local**, substitua o host por `http://localhost:<PORT>` mantendo o mesmo path (`/api/v1/auth/...`).
 
 ---
 
@@ -145,7 +163,7 @@ Para **401**, a mensagem é propositadamente **genérica**:
 - Nome, e-mail e detalhes completos de perfil: o JWT de access contém sobretudo `sub` (id) e `role`. Para e-mail/nome actualizados use **`GET /api/v1/auth/me`** com o access token.
 - Prazo de expiração dos tokens depende do ambiente (variáveis do servidor, ex. `JWT_EXPIRES_IN`). Não hardcodeie “30 minutos” no front sem alinhar com a API.
 
-Detalhes e rotas auxiliares (`/refresh`, `/logout`, `/me`) estão em [`AUTH-FLOW.md`](./AUTH-FLOW.md).
+Rotas auxiliares usam o mesmo prefixo (`/api/v1/auth`): `POST /refresh`, `POST /logout` e `GET /me`. Os pedidos em produção usam o mesmo prefixo completo: `https://api.ciatec.org/api/v1/auth/...`.
 
 ---
 
@@ -187,4 +205,9 @@ type AppErrorBody = { success: false; code: string; message: string };
 
 ## 7. Documentação OpenAPI
 
-Com o servidor a correr, a especificação interactiva fica em **`/docs`**, com os schemas de `Auth` e exemplos alinhados ao código.
+A especificação interactiva (contratos, schemas de `Auth`, exemplos alinhados ao código) está na **documentação hospedada na API**:
+
+- **Produção:** [`https://api.ciatec.org/docs`](https://api.ciatec.org/docs)
+- **Local:** `http://localhost:<PORT>/docs` quando o servidor estiver a correr
+
+Para detalhes de contrato, schemas e exemplos atualizados, use a tag **Auth** no Swagger.

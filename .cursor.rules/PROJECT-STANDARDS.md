@@ -1,5 +1,7 @@
 # ciatec-research-api — Project Standards
 
+**Leitura primeiro:** [AGENTS.md](../AGENTS.md) e [docs/README.md](../docs/README.md). Aqui ficam só **invariantes**; convenções longas estão nos Markdown ligados.
+
 ## Stack
 Node.js ESM · TypeScript (strict, NodeNext) · Fastify 5 · Prisma 7 + pg · Zod 4 · @fastify/jwt
 
@@ -52,5 +54,5 @@ const port = process.env.PORT
 ## Referências canônicas
 - Módulo CRUD: `src/modules/catalog/`
 - Telemetria: `src/modules/trunktilt/`
-- Convenções completas: `API-ARCHITECTURE-AND-CONVENTIONS.md`
-- Domínio e eixo longitudinal: `API-DOMAIN-AND-LONGITUDINAL-ARCHITECTURE.md`
+- Convenções: `docs/API-ARCHITECTURE-AND-CONVENTIONS.md`
+- Domínio (sob demanda): `docs/API-DOMAIN-AND-LONGITUDINAL-ARCHITECTURE.md`

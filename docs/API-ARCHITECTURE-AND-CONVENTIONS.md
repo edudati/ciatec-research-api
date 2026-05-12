@@ -2,11 +2,14 @@
 
 Este documento descreve a stack, o desenho da API e os padrões de código usados no **ciatec-research-api**. O objetivo é qualquer agente ou desenvolvedor replicar a mesma estrutura ao criar endpoints, serviços e mudanças de dados.
 
-### Documentação relacionada (uso por agentes)
+### Antes de PR para `main` / produção (qualquer alteração)
 
-Ao criar **novas soluções** que envolvam sessões, partidas, telemetria, progresso, catálogo ou organização longitudinal (RMS/CRIS), usar **também**:
+- **[PR-PRODUCTION-READINESS.md](./PR-PRODUCTION-READINESS.md)** — checklist **obrigatório** (build, lint, Prisma, Docker, texto da PR).
 
-- **[API-DOMAIN-AND-LONGITUDINAL-ARCHITECTURE.md](./API-DOMAIN-AND-LONGITUDINAL-ARCHITECTURE.md)** — domínio de negócio, entidades Prisma, relacionamentos, fluxo `Session` → `Match`, integração entre módulos, regras para **`timeline_events`** (camada de linha do tempo), participantes/pesquisadores/projetos/grupos e checklist de modelagem.
+### Documentação relacionada
+
+- **[AGENTS.md](../AGENTS.md)** — índice curto por tipo de tarefa.
+- **[API-DOMAIN-AND-LONGITUDINAL-ARCHITECTURE.md](./API-DOMAIN-AND-LONGITUDINAL-ARCHITECTURE.md)** — ler quando a mudança tocar em sessões, partidas, telemetria, progresso, catálogo longitudinal ou RMS/CRIS (domínio Prisma, `Session` → `Match`, `timeline_events`, etc.).
 
 **Este arquivo** cobre *como* implementar (stack e padrão de módulo); o documento de domínio cobre *o quê* existe no modelo e *como* estender sem violar o eixo longitudinal.
 
@@ -126,6 +129,8 @@ Campos `Json` no Prisma (ex.: `Level.config`) devem ser gravados com cast apropr
 ### Migrações
 
 Alterações de schema: editar `prisma/schema.prisma`, gerar migração com `prisma migrate dev` (ou fluxo da equipe), commitar SQL em `prisma/migrations/`. Produção: `prisma migrate deploy`.
+
+Antes de abrir PR para `main`, cumprir o checklist de **[PR-PRODUCTION-READINESS.md](./PR-PRODUCTION-READINESS.md)** (build, lint, migrações testadas, `docker build`).
 
 ---
 

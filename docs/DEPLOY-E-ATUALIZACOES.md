@@ -1,6 +1,10 @@
 # Deploy e atualizações da API
 
+**Índice da documentação:** [docs/README.md](./README.md) · **setup local:** [COMO-RODAR-LOCAL.md](./COMO-RODAR-LOCAL.md)
+
 Este guia resume o fluxo sempre que houver **nova versão do código** (local, EC2 ou outro servidor com Docker). A API roda em **Node 22** dentro da imagem; o PostgreSQL de desenvolvimento local usa **Docker Compose** (Postgres 18). Em produção, o banco costuma ser **RDS** (ou outro Postgres gerenciado).
+
+**Antes de cada PR para `main`:** checklist fixo em **[PR-PRODUCTION-READINESS.md](./PR-PRODUCTION-READINESS.md)** (build, lint, Prisma, `docker build`, texto da PR). O deploy em produção assume que esse checklist já foi cumprido no merge.
 
 ---
 
@@ -128,5 +132,4 @@ Detalhes de configuração do Nginx ficam fora deste repositório; apenas alinhe
 ## Referências no repo
 
 - [COMO-RODAR-LOCAL.md](./COMO-RODAR-LOCAL.md) — fluxo dev, Compose, Postgres 18.
-- [SUBIR-SERVIDOR.md](./SUBIR-SERVIDOR.md) — variáveis e `npm run build` / `npm start` sem Docker.
 - [DOT-ENV-GUIDE.md](./DOT-ENV-GUIDE.md) — descrição das variáveis do `.env`.

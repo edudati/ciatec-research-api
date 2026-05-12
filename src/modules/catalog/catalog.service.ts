@@ -92,27 +92,6 @@ export function createCatalogService({ prisma }: CatalogServiceDeps) {
       };
     },
 
-    async deleteGame(gameId: string) {
-      // Soft delete cascade: game -> presets -> levels
-      const game = await prisma.game.findFirst({ where: { id: gameId, ...ACTIVE_NOT_DELETED }, select: { id: true } });
-      if (!game) throw new NotFoundError('Game not found');
-
-      await prisma.$transaction(async (tx) => {
-        await tx.level.updateMany({
-          where: { preset: { gameId, isDeleted: false } },
-          data: { isDeleted: true, isActive: false },
-        });
-        await tx.preset.updateMany({
-          where: { gameId, isDeleted: false },
-          data: { isDeleted: true, isActive: false },
-        });
-        await tx.game.update({
-          where: { id: gameId },
-          data: { isDeleted: true, isActive: false },
-        });
-      });
-    },
-
     // Presets
     async listPresets(gameId: string) {
       const game = await prisma.game.findFirst({ where: { id: gameId, ...ACTIVE_NOT_DELETED }, select: { id: true } });
