@@ -1,0 +1,92 @@
+"""Users persistence (admin list and mutations)."""
+
+import uuid
+from typing import Any
+
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+from sqlalchemy.sql.elements import ColumnElement
+
+from src.models.user import AuthUser, User
+
+
+class UsersRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    def _list_base_conditions(
+        self,
+        *,
+        q: str | None,
+        role: str | None,
+    ) -> list[ColumnElement[bool]]:
+        conds: list[ColumnElement[bool]] = [User.deleted_at.is_(None)]
+        if role is not None:
+            conds.append(User.role == role)
+        if q is not None and (term := q.strip()):
+            like = f"%{term}%"
+            conds.append(or_(User.name.ilike(like), User.email.ilike(like)))
+        return conds
+
+    async def count_list(
+        self,
+        *,
+        q: str | None,
+        role: str | None,
+    ) -> int:
+        conds = self._list_base_conditions(q=q, role=role)
+        stmt = (
+            select(func.count())
+            .select_from(User)
+            .join(AuthUser, AuthUser.user_id == User.id)
+            .where(and_(*conds))
+        )
+        result = await self._session.scalar(stmt)
+        return int(result or 0)
+
+    async def list_page(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        q: str | None,
+        role: str | None,
+        sort_column: Any,
+        order_desc: bool,
+    ) -> list[User]:
+        conds = self._list_base_conditions(q=q, role=role)
+        stmt = (
+            select(User)
+            .join(AuthUser, AuthUser.user_id == User.id)
+            .where(and_(*conds))
+            .options(joinedload(User.auth_user))
+        )
+        if order_desc:
+            stmt = stmt.order_by(sort_column.desc())
+        else:
+            stmt = stmt.order_by(sort_column.asc())
+        offset = (page - 1) * page_size
+        stmt = stmt.offset(offset).limit(page_size)
+        result = await self._session.execute(stmt)
+        return list(result.unique().scalars().all())
+
+    async def get_by_id_with_auth(self, user_id: uuid.UUID) -> User | None:
+        stmt = (
+            select(User).where(User.id == user_id).options(joinedload(User.auth_user))
+        )
+        result = await self._session.execute(stmt)
+        return result.unique().scalar_one_or_none()
+
+    async def email_taken_by_other(self, email: str, exclude_id: uuid.UUID) -> bool:
+        stmt = (
+            select(User.id).where(User.email == email, User.id != exclude_id).limit(1)
+        )
+        row = await self._session.execute(stmt)
+        return row.scalar_one_or_none() is not None
+
+    def add_user(self, user: User) -> None:
+        self._session.add(user)
+
+    def add_auth_user(self, row: AuthUser) -> None:
+        self._session.add(row)

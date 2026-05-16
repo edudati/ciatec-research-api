@@ -1,0 +1,14 @@
+---
+description: Padrões obrigatórios da CIATec Research API (FastAPI) — alinhado a documentation/STACK-AND-ARCHITECTURE.md e BACKLOG F0+.
+alwaysApply: true
+---
+
+# CIATec Research API — Python / FastAPI
+
+- **Fonte de verdade:** `documentation/STACK-AND-ARCHITECTURE.md` e `documentation/BACKLOG.md`. Roadmap de domínio longitudinal (fases CRIS, diagramas): `documentation/CRIS-IMPLEMENTATION-PLAN.md` — complementar ao BACKLOG, não substitui priorização por cartão.
+- **Layout:** código da API em `src/` (pacote importável `src`). `uvicorn src.main:app`. Routers em `src/modules/<domínio>/router.py`; lógica em `service.py`, persistência em `repository.py`, contratos Pydantic em `schemas.py`.
+- **Camadas:** Router fino → Service (negócio, transação) → Repository (SQLAlchemy). **Sem** `HTTPException` no service; use exceções de `src/core/exceptions.py` e handlers globais em `src/core/middleware.py`.
+- **ORM:** SQLAlchemy 2 declarative, `Mapped` / `mapped_column`, `lazy="raise"` em relacionamentos salvo exceção documentada. PostgreSQL async com **asyncpg** (`postgresql+asyncpg://`). Migrations só via Alembic (`alembic revision` + revisão manual).
+- **API:** endpoints com `response_model` explícito; auth/autorização via `Depends()`, nunca lógica de segurança espalhada no handler.
+- **Config:** `get_settings()` em `src/core/config.py` (pydantic-settings); não ler `os.environ` solto nos services.
+- **Qualidade:** alterações devem manter `ruff check .`, `mypy .` e `pytest` verdes. Preferir testes async com `httpx.AsyncClient` + `ASGITransport` como em `tests/conftest.py`. **Python 3.14.2** (`>=3.14.2,<3.15`) no venv local e em CI.
